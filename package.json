@@ -1,7 +1,7 @@
 {
   "name": "swiftplays",
   "version": "1.0.0",
-  "description": "Plateforme eSport.",
+  "description": "Competitive gaming platform with team management and tournaments",
   "private": true,
   "scripts": {
     "dev": "turbo run dev",
@@ -13,10 +13,6 @@
   "devDependencies": {
     "turbo": "latest"
   },
-  "workspaces": [
-    "apps/*",
-    "packages/*"
-  ],
   "engines": {
     "node": ">=18.0.0",
     "npm": ">=9.0.0"
