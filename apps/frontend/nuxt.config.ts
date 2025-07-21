@@ -1,5 +1,5 @@
 export default defineNuxtConfig({
-  devtools: { enabled: true },
+  devtools: { enabled: false }, // Désactiver en prod
 
   modules: [
     '@pinia/nuxt',
@@ -22,7 +22,9 @@ export default defineNuxtConfig({
 
   runtimeConfig: {
     public: {
-      apiBase: 'http://localhost:3001'
+      apiBase: process.env.NODE_ENV === 'production'
+          ? 'https://swiftplays.fr/api'
+          : 'http://localhost:3001'
     }
   }
 })
