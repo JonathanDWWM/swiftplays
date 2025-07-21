@@ -1,5 +1,9 @@
+import { defineNuxtConfig } from 'nuxt/config'
+import tsconfigPaths from 'vite-tsconfig-paths'
+import { resolve } from 'path'
+
 export default defineNuxtConfig({
-  devtools: { enabled: false }, // Désactiver en prod
+  devtools: { enabled: false },
 
   modules: [
     '@pinia/nuxt',
@@ -7,8 +11,15 @@ export default defineNuxtConfig({
     '@nuxt/image'
   ],
 
-  // CSS - COMMENTÉ pour l'instant
-  // css: ['~/assets/scss/main.scss'],
+  css: [
+    resolve(__dirname, 'assets/scss/main.scss')
+  ],
+
+  vite: {
+    plugins: [
+      tsconfigPaths()
+    ]
+  },
 
   typescript: {
     typeCheck: false
