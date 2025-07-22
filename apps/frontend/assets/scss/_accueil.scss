@@ -1,13 +1,9 @@
 
-// 📁 apps/frontend/assets/scss/_accueil.scss
-// ==========================================
-// STYLES DE LA PAGE D'ACCUEIL
-// ==========================================
-
 .homepage {
-  background: #0A0A0A;
-  color: #FFFFFF;
-  min-height: 100vh;
+  background-color: #0A0A0A;
+  background-image:
+          radial-gradient(circle at 1px 1px, #1F1F1F 1px, transparent 0);
+  background-size: 20px 20px;
 }
 
 // Navigation
