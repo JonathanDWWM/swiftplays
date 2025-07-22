@@ -1,11 +1,18 @@
-
 .homepage {
-  background-color: #0A0A0A;
-  background-image:
-          radial-gradient(circle at 1px 1px, #1F1F1F 1px, transparent 0);
-  background-size: 20px 20px;
+  background: linear-gradient(135deg,
+          #0A0A0A 0%,
+          #1A1A2E 30%,
+          #16213E 60%,
+          #0F3460 85%,
+          #1A1A2E 100%
+  );
 }
 
+@keyframes shine {
+  0% { left: -100%; }
+  50% { left: 100%; }
+  100% { left: -100%; }
+}
 // Navigation
 .nav {
   position: fixed;

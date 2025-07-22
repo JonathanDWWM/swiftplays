@@ -4,15 +4,7 @@
     <nav class="nav">
       <div class="nav-container">
         <div class="nav-logo">
-          <svg width="40" height="40" viewBox="0 0 100 100">
-            <defs>
-              <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" style="stop-color:#5BA3E0"/>
-                <stop offset="100%" style="stop-color:#2563EB"/>
-              </linearGradient>
-            </defs>
-            <path d="M20 10 L50 40 L80 10 L65 25 L50 60 L35 25 Z" fill="url(#logoGradient)"/>
-          </svg>
+          <img src="/logo.png" alt="SwiftPlays Logo" width="40" height="40" />
           <span class="nav-title">SwiftPlays</span>
         </div>
 
@@ -204,15 +196,7 @@
       <div class="container">
         <div class="footer-content">
           <div class="footer-logo">
-            <svg width="32" height="32" viewBox="0 0 100 100">
-              <defs>
-                <linearGradient id="footerLogoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" style="stop-color:#5BA3E0"/>
-                  <stop offset="100%" style="stop-color:#2563EB"/>
-                </linearGradient>
-              </defs>
-              <path d="M20 10 L50 40 L80 10 L65 25 L50 60 L35 25 Z" fill="url(#footerLogoGradient)"/>
-            </svg>
+            <img src="/logo.png" alt="SwiftPlays Logo" width="40" height="40" />
             <span class="footer-title">SwiftPlays</span>
           </div>
           <p class="footer-description">
