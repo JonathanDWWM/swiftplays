@@ -15,10 +15,10 @@
       </div>
     </nav>
 
-    <!-- Hero Section -->
+
+    <!-- Hero Section modifiée -->
     <section class="hero">
       <div class="hero-content">
-
         <h1 class="hero-title">
           Des modes de compétition
           <span class="text-gradient">jamais vus ailleurs</span>
@@ -28,15 +28,6 @@
           SwiftPlays révolutionne le gaming compétitif avec des formats uniques,
           des championnats innovants et une expérience que vous ne trouverez nulle part ailleurs.
         </p>
-
-        <div class="hero-buttons">
-          <button class="btn btn-primary btn-large">
-            Découvrir les modes
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="m9 18 6-6-6-6"/>
-            </svg>
-          </button>
-        </div>
 
         <div class="hero-stats">
           <div class="stat">
@@ -51,22 +42,31 @@
       </div>
 
       <div class="hero-visual">
-        <div class="floating-card card-1">
-          <div class="card-icon">🏆</div>
-          <div class="card-title">Ladder Dynamique</div>
-          <div class="card-description">Classement ELO en temps réel</div>
+        <!-- Jeux supportés -->
+        <div class="games-showcase">
+          <div class="game-card fifa">
+            <img src="/fifa25-cover.png" alt="FIFA 25" class="game-cover">
+            <div class="game-info">
+              <h3>FIFA 25</h3>
+            </div>
+          </div>
+
+          <div class="game-card cod">
+            <img src="/blackops6-cover.png" alt="Call of Duty Black Ops 6" class="game-cover">
+            <div class="game-info">
+              <h3>Black Ops 6</h3>
+            </div>
+          </div>
         </div>
 
-        <div class="floating-card card-2">
-          <div class="card-icon">⚡</div>
-          <div class="card-title">Modes Swift</div>
-          <div class="card-description">Formats de jeu exclusifs</div>
-        </div>
-
-        <div class="floating-card card-3">
-          <div class="card-icon">👥</div>
-          <div class="card-title">Équipes Pro</div>
-          <div class="card-description">Gestion avancée</div>
+        <!-- Bouton déplacé ici -->
+        <div class="hero-button-bottom">
+          <button class="btn btn-primary btn-large">
+            Découvrir les modes
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="m9 18 6-6-6-6"/>
+            </svg>
+          </button>
         </div>
       </div>
     </section>
