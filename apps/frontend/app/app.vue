@@ -45,9 +45,9 @@
         <!-- Jeux supportés -->
         <div class="games-showcase">
           <div class="game-card fifa">
-            <img src="/fifa25-cover.png" alt="FIFA 25" class="game-cover">
+            <img src="/fifa25-cover.png" alt="FC25" class="game-cover">
             <div class="game-info">
-              <h3>FIFA 25</h3>
+              <h3>FC 25</h3>
             </div>
           </div>
 
@@ -220,7 +220,7 @@
 <script setup>
 
 useHead({
-  title: 'SwiftPlays | Accueil',
+  title: 'SwiftPlays',
   meta: [
     {
       name: 'description',
