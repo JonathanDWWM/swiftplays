@@ -11,6 +11,10 @@ export default defineNuxtConfig({
     '@nuxt/image'
   ],
 
+  imports: {
+    dirs: ['stores']
+  },
+
   css: [
     resolve(__dirname, 'assets/scss/main.scss')
   ],
@@ -22,7 +26,8 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    typeCheck: false
+    strict: true,
+    typeCheck: true
   },
 
   compatibilityDate: '2025-07-16',

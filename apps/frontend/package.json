@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-app",
+  "name": "frontend",
   "private": true,
   "type": "module",
   "scripts": {
@@ -11,7 +11,7 @@
   },
   "dependencies": {
     "@nuxt/image": "^1.10.0",
-    "@pinia/nuxt": "^0.11.1",
+    "@pinia/nuxt": "^0.11.2",
     "@vueuse/nuxt": "^13.5.0",
     "nuxt": "^4.0.0",
     "socket.io-client": "^4.8.1",
@@ -19,8 +19,11 @@
     "vue-router": "^4.5.1"
   },
   "devDependencies": {
+    "@nuxt/typescript-build": "^3.0.2",
     "@types/node": "^24.0.14",
     "sass": "^1.89.2",
-    "vite-tsconfig-paths": "^5.1.4"
+    "typescript": "^5.8.3",
+    "vite-tsconfig-paths": "^5.1.4",
+    "vue-tsc": "^3.0.3"
   }
 }

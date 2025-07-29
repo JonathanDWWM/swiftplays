@@ -9,14 +9,13 @@
         </div>
 
         <div class="nav-buttons">
-          <button class="btn btn-outline">Connexion</button>
-          <button class="btn btn-primary">Inscription</button>
+          <NuxtLink to="/connexion" class="btn btn-outline">Connexion</NuxtLink>
+          <NuxtLink to="/inscription" class="btn btn-primary">Inscription</NuxtLink>
         </div>
       </div>
     </nav>
 
-
-    <!-- Hero Section modifiée -->
+    <!-- Hero Section -->
     <section class="hero">
       <div class="hero-content">
         <h1 class="hero-title">
@@ -61,12 +60,12 @@
 
         <!-- Bouton déplacé ici -->
         <div class="hero-button-bottom">
-          <button class="btn btn-primary btn-large">
+          <NuxtLink to="/inscription" class="btn btn-primary btn-large">
             Découvrir les modes
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="m9 18 6-6-6-6"/>
             </svg>
-          </button>
+          </NuxtLink>
         </div>
       </div>
     </section>
@@ -179,12 +178,12 @@
             Rejoignez la nouvelle génération de gamers compétitifs sur SwiftPlays
           </p>
           <div class="cta-buttons">
-            <button class="btn btn-primary btn-large">
+            <NuxtLink to="/inscription" class="btn btn-primary btn-large">
               Commencer maintenant
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="m9 18 6-6-6-6"/>
               </svg>
-            </button>
+            </NuxtLink>
             <button class="btn btn-outline btn-large">En savoir plus</button>
           </div>
         </div>
@@ -218,7 +217,6 @@
 </template>
 
 <script setup>
-
 useHead({
   title: 'SwiftPlays',
   meta: [
@@ -229,5 +227,3 @@ useHead({
   ]
 })
 </script>
-
-<style lang="scss" scoped></style>
