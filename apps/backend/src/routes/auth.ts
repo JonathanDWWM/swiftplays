@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { register, login, refreshToken, getMe, logout } from '../controllers/authController';
 import { validateRegister, validateLogin } from '../middleware/validation';
 import { authenticateToken } from '../middleware/auth';
+import discordAuthRoutes from './discordAuth';
 
 const router = Router();
 
@@ -34,5 +35,10 @@ router.get('/me', authenticateToken, getMe);
  * Déconnexion (côté client principalement)
  */
 router.post('/logout', logout);
+
+/**
+ * Routes Discord OAuth
+ */
+router.use('/', discordAuthRoutes);
 
 export default router;

@@ -206,9 +206,9 @@
         <div class="footer-bottom">
           <p>&copy; 2025 SwiftPlays. Tous droits réservés.</p>
           <div class="footer-links">
-            <a href="#" class="footer-link">Mentions légales</a>
-            <a href="#" class="footer-link">Confidentialité</a>
-            <a href="#" class="footer-link">Contact</a>
+            <NuxtLink to="/mentions-legales" class="footer-link">Mentions légales</NuxtLink>
+            <NuxtLink to="/confidentialite" class="footer-link">Confidentialité</NuxtLink>
+            <NuxtLink to="/a-propos" class="footer-link">À propos</NuxtLink>
           </div>
         </div>
       </div>

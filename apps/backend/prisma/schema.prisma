@@ -10,13 +10,21 @@ datasource db {
 model User {
   id          String   @id @default(cuid())
   email       String   @unique
-  password    String
+  password    String?  // Optionnel pour les comptes Discord
   pseudo      String   @unique
   firstName   String?
   lastName    String?
   avatar      String?  // URL vers l'image de profil
   isVerified  Boolean  @default(false)
   role        Role     @default(USER)
+
+  // Discord OAuth
+  discordId       String? @unique // ID Discord de l'utilisateur
+  discordUsername String? // Nom d'utilisateur Discord
+  discordAvatar   String? // URL de l'avatar Discord
+  
+  // Type de compte
+  accountType     AccountType @default(EMAIL)
 
   // Timestamps
   createdAt   DateTime @default(now())
@@ -29,5 +37,11 @@ enum Role {
   USER
   MODERATOR
   ADMIN
+}
+
+enum AccountType {
+  EMAIL    // Compte créé avec email/password
+  DISCORD  // Compte créé via Discord OAuth
+  HYBRID   // Compte email lié à Discord
 }
 

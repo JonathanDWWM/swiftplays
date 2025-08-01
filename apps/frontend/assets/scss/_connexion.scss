@@ -1,0 +1,64 @@
+// Styles spécifiques à la page de connexion
+
+// Discord Auth Section
+.discord-auth {
+  margin-bottom: 2rem;
+  
+  .discord-button {
+    width: 100%;
+    background: #5865F2;
+    border: none;
+    border-radius: 8px;
+    padding: 1rem 2rem;
+    color: white;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    
+    &:hover:not(:disabled) {
+      background: #4752C4;
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(88, 101, 242, 0.3);
+    }
+    
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+      transform: none;
+    }
+    
+    .discord-icon {
+      flex-shrink: 0;
+    }
+  }
+}
+
+// Divider
+.auth-divider {
+  position: relative;
+  margin: 2rem 0;
+  text-align: center;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: rgba(156, 163, 175, 0.3);
+  }
+  
+  .divider-text {
+    background: rgba(26, 26, 26, 0.95);
+    padding: 0 1rem;
+    color: #9CA3AF;
+    font-size: 0.9rem;
+    position: relative;
+  }
+}
