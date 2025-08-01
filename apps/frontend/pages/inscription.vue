@@ -1,5 +1,19 @@
 <template>
   <div class="auth-page">
+    <!-- Message de succès (overlay) -->
+    <div v-if="showSuccessMessage" class="success-overlay">
+      <div class="success-message">
+        <div class="success-icon">✅</div>
+        <h3>Inscription réussie !</h3>
+        <p>Votre compte <strong>{{ form.pseudo }}</strong> a été créé avec succès</p>
+        <p>Un email de confirmation a été envoyé à <strong>{{ form.email }}</strong></p>
+        <div class="redirect-info">
+          <span class="loading-spinner"></span>
+          Redirection vers la connexion...
+        </div>
+      </div>
+    </div>
+
     <div class="auth-container auth-container--register">
       <!-- Logo/Titre -->
       <div class="auth-header">
@@ -24,6 +38,7 @@
               placeholder="Votre pseudo (3-15 caractères)"
               required
               autocomplete="username"
+              :disabled="showSuccessMessage"
           />
           <span v-if="errors.pseudo" class="form-error">{{ errors.pseudo }}</span>
           <span v-else-if="!errors.pseudo && form.pseudo.length >= 3" class="form-success">
@@ -46,6 +61,7 @@
               placeholder="votre@email.com"
               required
               autocomplete="email"
+              :disabled="showSuccessMessage"
           />
           <span v-if="errors.email" class="form-error">{{ errors.email }}</span>
           <span v-else-if="!errors.email && form.email.length > 0" class="form-success">
@@ -69,11 +85,13 @@
                 placeholder="Minimum 8 caractères"
                 required
                 autocomplete="new-password"
+                :disabled="showSuccessMessage"
             />
             <button
                 type="button"
                 @click="showPassword = !showPassword"
                 class="password-toggle"
+                :disabled="showSuccessMessage"
             >
               {{ showPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -119,11 +137,13 @@
                 placeholder="Répétez votre mot de passe"
                 required
                 autocomplete="new-password"
+                :disabled="showSuccessMessage"
             />
             <button
                 type="button"
                 @click="showConfirmPassword = !showConfirmPassword"
                 class="password-toggle"
+                :disabled="showSuccessMessage"
             >
               {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
             </button>
@@ -143,7 +163,7 @@
         <button
             type="submit"
             class="auth-button"
-            :disabled="authStore.isLoading || !isFormValid"
+            :disabled="authStore.isLoading || !isFormValid || showSuccessMessage"
             :class="{ 'auth-button--loading': authStore.isLoading }"
         >
           <span v-if="authStore.isLoading">Création du compte...</span>
@@ -198,6 +218,9 @@ const form = reactive<RegisterForm>({
 // État de l'affichage des mots de passe
 const showPassword = ref(false)
 const showConfirmPassword = ref(false)
+
+// État pour le message de succès
+const showSuccessMessage = ref(false)
 
 // Erreurs de validation
 const errors = reactive({
@@ -323,12 +346,18 @@ const handleRegister = async () => {
   })
 
   if (result.success) {
-    // ✅ PAS BESOIN DE initAuth() - le register() met déjà à jour le store
-    console.log('Inscription réussie, authStore.isAuthenticated:', authStore.isAuthenticated)
+    // ✅ INSCRIPTION RÉUSSIE
+    console.log('Inscription réussie !')
 
-    // Redirection directe vers le dashboard
-    window.location.href = '/dashboard'
+    // Afficher le message de succès
+    showSuccessMessage.value = true
+
+    // Redirection vers la connexion après 3 secondes
+    setTimeout(() => {
+      window.location.href = '/connexion?registered=true'
+    }, 3000)
   }
+  // Les erreurs sont gérées automatiquement par le store
 }
 
 // Redirection si déjà connecté
@@ -338,3 +367,4 @@ onMounted(() => {
   }
 })
 </script>
+

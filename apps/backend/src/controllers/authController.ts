@@ -4,6 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateTokenPair, verifyRefreshToken, generateAccessToken } from '../utils/jwt';
 import { RegisterRequest, LoginRequest, AuthResponse, AuthenticatedRequest, ErrorResponse } from '../types/auth';
+import { emailService } from '../services/emailService';
 
 const prisma = new PrismaClient();
 
@@ -37,6 +38,15 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             email: user.email,
             pseudo: user.pseudo,
             role: user.role
+        });
+
+        // Envoyer l'email de bienvenue (sans bloquer la réponse)
+        emailService.sendWelcomeEmail({
+            email: user.email,
+            pseudo: user.pseudo,
+            firstName: user.firstName || undefined
+        }).catch(error => {
+            console.error('Erreur envoi email de bienvenue:', error);
         });
 
         const response: AuthResponse = {

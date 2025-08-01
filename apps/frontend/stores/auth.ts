@@ -194,9 +194,9 @@ export const useAuthStore = defineStore('auth', {
         // 🔄 Initialisation de l'authentification
         async initAuth() {
             const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
-            const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true'
+            // SUPPRIMÉ: const rememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true'
 
-            if (!refreshToken || !rememberMe) {
+            if (!refreshToken) {  // ← Vérification seulement du refreshToken
                 this.clearAuth()
                 return false
             }
