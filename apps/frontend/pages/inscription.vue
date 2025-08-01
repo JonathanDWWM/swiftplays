@@ -93,7 +93,7 @@
                 class="password-toggle"
                 :disabled="showSuccessMessage"
             >
-              {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+              {{ showPassword ? 'Masquer' : 'Afficher' }}
             </button>
           </div>
           <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
@@ -145,7 +145,7 @@
                 class="password-toggle"
                 :disabled="showSuccessMessage"
             >
-              {{ showConfirmPassword ? '👁️' : '👁️‍🗨️' }}
+              {{ showConfirmPassword ? 'Masquer' : 'Afficher' }}
             </button>
           </div>
           <span v-if="errors.confirmPassword" class="form-error">{{ errors.confirmPassword }}</span>
