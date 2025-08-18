@@ -110,6 +110,16 @@ export const login = async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
+        // Vérifier que l'utilisateur a un mot de passe (pas un compte Discord only)
+        if (!user.password) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Ce compte utilise Discord pour se connecter'
+            };
+            res.status(401).json(errorResponse);
+            return;
+        }
+
         // Vérifier le mot de passe
         const isValidPassword = await comparePassword(password, user.password);
 
