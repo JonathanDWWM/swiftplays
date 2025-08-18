@@ -62,7 +62,7 @@ export const useAuthStore = defineStore('auth', {
         // 🌐 Appels API
         async apiCall(endpoint: string, options: RequestInit = {}) {
             const apiBase = process.env.NODE_ENV === 'production'
-                ? 'https://swiftplays.fr/api'
+                ? 'https://swiftplays.fr'
                 : 'http://localhost:3001'
             const url = `${apiBase}${endpoint}`
 
