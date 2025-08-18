@@ -9,6 +9,7 @@ import { PrismaClient } from '@prisma/client';
 
 // Import des routes
 import authRoutes from './routes/auth';
+import discordAuthRoutes from './routes/discordAuth';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -78,6 +79,7 @@ app.get('/health', async (req, res) => {
 
 // Routes API - Authentification
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', discordAuthRoutes);
 
 // Futures routes API
 // app.use('/api/users', userRoutes);

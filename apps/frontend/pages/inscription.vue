@@ -107,7 +107,7 @@
                 class="password-toggle"
                 :disabled="showSuccessMessage"
             >
-              {{ showPassword ? 'Masquer' : 'Afficher' }}
+            
             </button>
           </div>
           <span v-if="errors.password" class="form-error">{{ errors.password }}</span>
@@ -159,7 +159,7 @@
                 class="password-toggle"
                 :disabled="showSuccessMessage"
             >
-              {{ showConfirmPassword ? 'Masquer' : 'Afficher' }}
+            
             </button>
           </div>
           <span v-if="errors.confirmPassword" class="form-error">{{ errors.confirmPassword }}</span>
@@ -190,6 +190,9 @@
         <p class="auth-link-text">
           Déjà un compte ?
           <NuxtLink to="/connexion" class="auth-link">Se connecter</NuxtLink>
+        </p>
+        <p class="discord-hint">
+          Vous avez Discord ? Connectez-vous directement avec votre compte Discord ci-dessus
         </p>
       </div>
     </div>
@@ -348,7 +351,7 @@ const handleDiscordLogin = async () => {
     // Rediriger vers l'endpoint Discord OAuth du backend
     const apiBase = process.env.NODE_ENV === 'production'
       ? 'https://swiftplays.fr'
-      : 'http://localhost:3002'
+      : 'http://localhost:3001'
     
     window.location.href = `${apiBase}/api/auth/discord`
   } catch (error) {

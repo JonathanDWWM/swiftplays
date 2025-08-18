@@ -58,7 +58,7 @@
                 @click="showPassword = !showPassword"
                 class="password-toggle"
             >
-              {{ showPassword ? 'Masquer' : 'Afficher' }}
+            
             </button>
           </div>
           <span v-if="errors.password" class="form-error">{{ errors.password }}</span>

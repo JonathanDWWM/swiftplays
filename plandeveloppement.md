@@ -56,15 +56,17 @@
 - [x] Affichage des infos utilisateur de base
 - [x] Bouton déconnexion
 
-### Intégration Discord OAuth (optionnelle)
+### Intégration Discord OAuth ✅ TERMINÉ
 
 **Vous**
 
-- [ ] Configuration Discord OAuth
-- [ ] Route d'authentification Discord
-- [ ] Récupération données Discord (pseudo, avatar)
-- [ ] Liaison compte Discord ↔ compte classique
-- [ ] Pages connexion avec choix auth classique/Discord
+- [x] Configuration Discord OAuth
+- [x] Route d'authentification Discord
+- [x] Récupération données Discord (pseudo, avatar)
+- [x] Liaison compte Discord ↔ compte classique
+- [x] Pages connexion avec choix auth classique/Discord
+- [x] Création automatique de comptes via Discord
+- [x] Système de types de comptes (EMAIL, DISCORD, HYBRID)
 
 -----
 
@@ -288,10 +290,11 @@
 
 ### Phase 1 : Site fonctionnel avec auth ✅ TERMINÉ
 - Page d'accueil professionnelle ✅
-- Inscription/connexion complète (email ✅ + Discord ⏳ optionnel)
+- Inscription/connexion complète (email ✅ + Discord ✅)
 - Dashboard utilisateur style application ✅
 - Emails de bienvenue automatiques ✅
 - Pages légales et erreurs ✅
+- Authentification Discord OAuth complète ✅
 
 ### Phase 2 : Profils utilisateurs
 - Profils personnalisables
@@ -331,15 +334,16 @@
 -----
 
 ## 🚀 PROCHAINE ÉTAPE IMMÉDIATE
-**Phase 1 - ✅ TERMINÉE :**
+**Phase 1 - ✅ COMPLÈTEMENT TERMINÉE :**
 1. ✅ Page d'accueil → Vitrine professionnelle
 2. ✅ Auth JWT → Base solide
 3. ✅ Dashboard → Experience post-connexion style app
 4. ✅ Emails → Service automatique
 5. ✅ Pages manquantes → À propos, Footer, Erreurs
-6. ⏳ Discord OAuth → Option premium (optionnel)
+6. ✅ Discord OAuth → Authentification complète avec liaison de comptes
 
-**Phase 2 - Prochaines priorités :**
-1. Système de profils utilisateurs
-2. Pages de gestion des profils
-3. Upload d'avatars
+**Phase 2 - Démarrage immédiat :**
+1. Extension du modèle User (pseudo, bio, avatar, stats)
+2. Pages de gestion des profils utilisateurs
+3. Upload d'avatars et personnalisation
+4. API gestion profils (GET, PUT /api/users/profile)
