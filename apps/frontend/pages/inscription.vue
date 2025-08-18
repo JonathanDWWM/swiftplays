@@ -191,9 +191,6 @@
           Déjà un compte ?
           <NuxtLink to="/connexion" class="auth-link">Se connecter</NuxtLink>
         </p>
-        <p class="discord-hint">
-          Vous avez Discord ? Connectez-vous directement avec votre compte Discord ci-dessus
-        </p>
       </div>
     </div>
   </div>

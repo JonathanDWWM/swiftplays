@@ -8,7 +8,11 @@
       "Bash(taskkill:*)",
       "Bash(pkill:*)",
       "Bash(rm:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(ssh:*)"
     ],
     "deny": []
   }

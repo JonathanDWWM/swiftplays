@@ -27,6 +27,10 @@ export const initiateDiscordAuth = async (req: Request, res: Response): Promise<
  */
 export const handleDiscordCallback = async (req: Request, res: Response): Promise<void> => {
     try {
+        console.log('=== DEBUG Discord Callback ===');
+        console.log('Query params:', req.query);
+        console.log('CORS_ORIGIN:', process.env.CORS_ORIGIN);
+        
         const { code, error: discordError } = req.query;
 
         // Vérifier s'il y a une erreur de Discord
@@ -38,9 +42,12 @@ export const handleDiscordCallback = async (req: Request, res: Response): Promis
 
         // Vérifier la présence du code
         if (!code || typeof code !== 'string') {
+            console.log('Pas de code Discord valide');
             res.redirect(`${process.env.CORS_ORIGIN}/connexion?error=discord_no_code`);
             return;
         }
+        
+        console.log('Code Discord reçu:', code.substring(0, 10) + '...');
 
         // Échanger le code contre un token
         const tokenData = await discordService.exchangeCodeForToken(code);
