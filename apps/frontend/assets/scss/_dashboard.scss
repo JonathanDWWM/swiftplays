@@ -23,13 +23,13 @@
 .sidebar-header {
   padding: 2rem 1.5rem;
   border-bottom: 1px solid rgba(59, 130, 214, 0.1);
-  
-  .logo {
-    font-size: 1.5rem;
-    font-weight: 800;
-    color: #3B82D6;
-    margin: 0;
-    letter-spacing: -0.02em;
+
+  .logo-container {
+    text-align:center;
+  }
+
+  .logo-image {
+    max-width: 50%;
   }
 }
 
@@ -179,6 +179,14 @@
   font-size: 0.85rem;
 }
 
+.user-avatar-image {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid rgba(59, 130, 214, 0.3);
+}
+
 .user-name {
   font-weight: 600;
   font-size: 0.9rem;
@@ -254,7 +262,13 @@
 .page-content {
   flex: 1;
   padding: 2rem;
-  background: linear-gradient(135deg, #0A0A0A 0%, #111111 100%);
+  background: linear-gradient(135deg,
+          #0A0A0A 0%,
+          #1A1A2E 30%,
+          #16213E 60%,
+          #0F3460 85%,
+          #1A1A2E 100%
+  );
 }
 
 .content-container {

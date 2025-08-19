@@ -12,7 +12,9 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(ssh:*)"
+      "Bash(ssh:*)",
+      "Bash(move fontawesome.client.ts fontawesome.ts)",
+      "Bash(mv:*)"
     ],
     "deny": []
   }

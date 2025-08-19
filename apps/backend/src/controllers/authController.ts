@@ -299,3 +299,242 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
 
     res.status(200).json(response);
 };
+
+/**
+ * Mise à jour du profil utilisateur
+ */
+export const updateProfile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Utilisateur non authentifié'
+            };
+            res.status(401).json(errorResponse);
+            return;
+        }
+
+        const { pseudo, email, firstName, lastName } = req.body;
+
+        // Validation des données
+        if (!pseudo || pseudo.length < 3) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Le pseudo doit contenir au moins 3 caractères'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        if (!email || !/\S+@\S+\.\S+/.test(email)) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Format d\'email invalide'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        // Vérifier si le pseudo est déjà pris par un autre utilisateur
+        const existingUserByPseudo = await prisma.user.findUnique({
+            where: { pseudo }
+        });
+
+        if (existingUserByPseudo && existingUserByPseudo.id !== req.user.userId) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Ce pseudo est déjà utilisé par un autre utilisateur'
+            };
+            res.status(409).json(errorResponse);
+            return;
+        }
+
+        // Vérifier si l'email est déjà pris par un autre utilisateur
+        const existingUserByEmail = await prisma.user.findUnique({
+            where: { email }
+        });
+
+        if (existingUserByEmail && existingUserByEmail.id !== req.user.userId) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Cette adresse email est déjà utilisée par un autre utilisateur'
+            };
+            res.status(409).json(errorResponse);
+            return;
+        }
+
+        // Mettre à jour l'utilisateur
+        const updatedUser = await prisma.user.update({
+            where: { id: req.user.userId },
+            data: {
+                pseudo,
+                email,
+                firstName: firstName || null,
+                lastName: lastName || null,
+                updatedAt: new Date()
+            },
+            select: {
+                id: true,
+                email: true,
+                pseudo: true,
+                firstName: true,
+                lastName: true,
+                avatar: true,
+                role: true,
+                isVerified: true,
+                accountType: true,
+                discordId: true,
+                discordUsername: true,
+                discordAvatar: true,
+                createdAt: true,
+                updatedAt: true
+            }
+        });
+
+        const response = {
+            success: true,
+            message: 'Profil mis à jour avec succès',
+            user: updatedUser
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error('Erreur mise à jour profil:', error);
+
+        // Gestion des erreurs Prisma
+        if (error instanceof PrismaClientKnownRequestError) {
+            if (error.code === 'P2002') {
+                const target = error.meta?.target as string[];
+                let message = 'Données déjà utilisées';
+
+                if (target?.includes('email')) {
+                    message = 'Cette adresse email est déjà utilisée';
+                } else if (target?.includes('pseudo')) {
+                    message = 'Ce pseudo est déjà pris';
+                }
+
+                const errorResponse: ErrorResponse = {
+                    success: false,
+                    message
+                };
+                res.status(409).json(errorResponse);
+                return;
+            }
+        }
+
+        const errorResponse: ErrorResponse = {
+            success: false,
+            message: 'Erreur interne du serveur'
+        };
+        res.status(500).json(errorResponse);
+    }
+};
+
+/**
+ * Changement de mot de passe
+ */
+export const changePassword = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+    try {
+        if (!req.user) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Utilisateur non authentifié'
+            };
+            res.status(401).json(errorResponse);
+            return;
+        }
+
+        const { currentPassword, newPassword } = req.body;
+
+        // Validation des données
+        if (!currentPassword || !newPassword) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Mot de passe actuel et nouveau mot de passe requis'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        if (newPassword.length < 8) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Le nouveau mot de passe doit contenir au moins 8 caractères'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        // Récupérer l'utilisateur avec son mot de passe
+        const user = await prisma.user.findUnique({
+            where: { id: req.user.userId }
+        });
+
+        if (!user) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Utilisateur non trouvé'
+            };
+            res.status(404).json(errorResponse);
+            return;
+        }
+
+        // Vérifier que l'utilisateur peut changer son mot de passe (pas un compte Discord only)
+        if (user.accountType === 'DISCORD') {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Les comptes Discord ne peuvent pas changer de mot de passe'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        if (!user.password) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Aucun mot de passe défini pour ce compte'
+            };
+            res.status(400).json(errorResponse);
+            return;
+        }
+
+        // Vérifier le mot de passe actuel
+        const isValidCurrentPassword = await comparePassword(currentPassword, user.password);
+
+        if (!isValidCurrentPassword) {
+            const errorResponse: ErrorResponse = {
+                success: false,
+                message: 'Mot de passe actuel incorrect'
+            };
+            res.status(401).json(errorResponse);
+            return;
+        }
+
+        // Hasher le nouveau mot de passe
+        const hashedNewPassword = await hashPassword(newPassword);
+
+        // Mettre à jour le mot de passe
+        await prisma.user.update({
+            where: { id: req.user.userId },
+            data: {
+                password: hashedNewPassword,
+                updatedAt: new Date()
+            }
+        });
+
+        const response = {
+            success: true,
+            message: 'Mot de passe changé avec succès'
+        };
+
+        res.status(200).json(response);
+    } catch (error) {
+        console.error('Erreur changement mot de passe:', error);
+
+        const errorResponse: ErrorResponse = {
+            success: false,
+            message: 'Erreur interne du serveur'
+        };
+        res.status(500).json(errorResponse);
+    }
+};

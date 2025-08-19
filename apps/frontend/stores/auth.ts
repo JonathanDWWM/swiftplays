@@ -214,6 +214,66 @@ export const useAuthStore = defineStore('auth', {
                 this.clearAuth()
                 return false
             }
+        },
+
+        // 👤 Gestion du profil
+        async updateProfile(profileData: {
+            pseudo: string
+            email: string
+            firstName: string | null
+            lastName: string | null
+        }) {
+            this.isLoading = true
+            this.error = null
+
+            try {
+                const result = await this.apiCall('/api/auth/profile', {
+                    method: 'PUT',
+                    body: JSON.stringify(profileData)
+                })
+
+                if (result.success) {
+                    this.user = result.user
+                    return true
+                } else {
+                    this.error = { message: result.message }
+                    return false
+                }
+            } catch (error) {
+                console.error('Erreur mise à jour profil:', error)
+                this.error = { message: 'Erreur lors de la mise à jour du profil' }
+                return false
+            } finally {
+                this.isLoading = false
+            }
+        },
+
+        async changePassword(passwordData: {
+            currentPassword: string
+            newPassword: string
+        }) {
+            this.isLoading = true
+            this.error = null
+
+            try {
+                const result = await this.apiCall('/api/auth/password', {
+                    method: 'PUT',
+                    body: JSON.stringify(passwordData)
+                })
+
+                if (result.success) {
+                    return true
+                } else {
+                    this.error = { message: result.message }
+                    return false
+                }
+            } catch (error) {
+                console.error('Erreur changement mot de passe:', error)
+                this.error = { message: 'Erreur lors du changement de mot de passe' }
+                return false
+            } finally {
+                this.isLoading = false
+            }
         }
     }
 })

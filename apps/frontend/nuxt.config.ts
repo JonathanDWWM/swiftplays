@@ -15,14 +15,23 @@ export default defineNuxtConfig({
     dirs: ['stores']
   },
 
+  components: {
+    global: true,
+    dirs: []
+  },
+
   css: [
-    resolve(__dirname, 'assets/scss/main.scss')
+    resolve(__dirname, 'assets/scss/main.scss'),
+    '@fortawesome/fontawesome-svg-core/styles.css'
   ],
 
   vite: {
     plugins: [
       tsconfigPaths()
-    ]
+    ],
+    ssr: {
+      noExternal: ['@fortawesome/vue-fontawesome']
+    }
   },
 
   typescript: {

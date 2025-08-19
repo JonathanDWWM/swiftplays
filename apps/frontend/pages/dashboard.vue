@@ -3,38 +3,30 @@
     <!-- Sidebar Navigation -->
     <aside class="sidebar">
       <div class="sidebar-header">
-        <h2 class="logo">SwiftPlays</h2>
+        <div class="logo-container">
+          <img src="/logo.png" alt="SwiftPlays" class="logo-image" />
+        </div>
       </div>
       
       <nav class="sidebar-nav">
         <ul class="nav-list">
           <li class="nav-item active">
             <a href="#" class="nav-link">
-              <i class="nav-icon">🏠</i>
               <span class="nav-text">Accueil</span>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon">👤</i>
-              <span class="nav-text">Mon Profil</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <i class="nav-icon">👥</i>
               <span class="nav-text">Mon Équipe</span>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon">🏆</i>
               <span class="nav-text">Tournois</span>
             </a>
           </li>
           <li class="nav-item">
             <a href="#" class="nav-link">
-              <i class="nav-icon">📊</i>
               <span class="nav-text">Classements</span>
             </a>
           </li>
@@ -51,34 +43,34 @@
         </div>
         
         <div class="header-right">
-          <!-- Notifications -->
-          <button class="header-button notification-btn">
-            <i class="icon">🔔</i>
-          </button>
-          
           <!-- User Menu -->
           <div class="user-menu">
             <button @click="toggleUserDropdown" class="user-button">
-              <div class="user-avatar">
+              <img 
+                v-if="authStore.user?.avatar" 
+                :src="authStore.user.avatar" 
+                :alt="authStore.user.pseudo" 
+                class="user-avatar-image"
+              />
+              <div 
+                v-else 
+                class="user-avatar"
+              >
                 {{ authStore.user?.pseudo?.charAt(0).toUpperCase() }}
               </div>
               <span class="user-name">{{ authStore.user?.pseudo }}</span>
-              <i class="dropdown-arrow">▼</i>
             </button>
             
             <!-- Dropdown Menu -->
             <div v-if="showUserDropdown" class="user-dropdown">
-              <a href="#" class="dropdown-item">
-                <i class="dropdown-icon">👤</i>
+              <NuxtLink to="/profil" class="dropdown-item">
                 Mon Profil
-              </a>
+              </NuxtLink>
               <a href="#" class="dropdown-item">
-                <i class="dropdown-icon">⚙️</i>
                 Paramètres
               </a>
               <div class="dropdown-divider"></div>
               <button @click="handleLogout" class="dropdown-item logout-item" :disabled="authStore.isLoading">
-                <i class="dropdown-icon">🚪</i>
                 {{ authStore.isLoading ? 'Déconnexion...' : 'Se déconnecter' }}
               </button>
             </div>
@@ -92,17 +84,16 @@
           <!-- Welcome Section -->
           <div class="welcome-section">
             <h2 class="welcome-title">
-              Bienvenue, {{ authStore.user?.pseudo }} ! 👋
+              Bienvenue, {{ authStore.user?.pseudo }} !
             </h2>
-            <p class="welcome-text">
-              Vous êtes connecté en tant que <strong>{{ authStore.user?.email }}</strong>
-            </p>
           </div>
 
           <!-- Quick Stats -->
           <div class="stats-grid">
             <div class="stat-card">
-              <div class="stat-icon">🏆</div>
+              <div class="stat-icon">
+                <FontAwesomeIcon icon="trophy" />
+              </div>
               <div class="stat-content">
                 <h3 class="stat-title">Tournois</h3>
                 <p class="stat-value">0</p>
@@ -110,7 +101,9 @@
             </div>
             
             <div class="stat-card">
-              <div class="stat-icon">👥</div>
+              <div class="stat-icon">
+                <FontAwesomeIcon icon="people-group" />
+              </div>
               <div class="stat-content">
                 <h3 class="stat-title">Équipe</h3>
                 <p class="stat-value">Aucune</p>
@@ -118,7 +111,9 @@
             </div>
             
             <div class="stat-card">
-              <div class="stat-icon">📊</div>
+              <div class="stat-icon">
+                <FontAwesomeIcon icon="ranking-star" />
+              </div>
               <div class="stat-content">
                 <h3 class="stat-title">Classement</h3>
                 <p class="stat-value">Non classé</p>
@@ -188,3 +183,4 @@ onUnmounted(() => {
   document.removeEventListener('click', closeDropdown)
 })
 </script>
+

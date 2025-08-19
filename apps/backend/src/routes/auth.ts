@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { register, login, refreshToken, getMe, logout } from '../controllers/authController';
+import { register, login, refreshToken, getMe, logout, updateProfile, changePassword } from '../controllers/authController';
 import { validateRegister, validateLogin } from '../middleware/validation';
 import { authenticateToken } from '../middleware/auth';
 import discordAuthRoutes from './discordAuth';
@@ -35,6 +35,18 @@ router.get('/me', authenticateToken, getMe);
  * Déconnexion (côté client principalement)
  */
 router.post('/logout', logout);
+
+/**
+ * PUT /api/auth/profile
+ * Mise à jour du profil utilisateur
+ */
+router.put('/profile', authenticateToken, updateProfile);
+
+/**
+ * PUT /api/auth/password
+ * Changement de mot de passe
+ */
+router.put('/password', authenticateToken, changePassword);
 
 /**
  * Routes Discord OAuth
