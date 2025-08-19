@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import { NotificationService } from '../services/notificationService';
+import { AuthenticatedRequest } from '../types/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -10,9 +11,9 @@ const prisma = new PrismaClient();
  * GET /api/teams/my
  * Récupérer les équipes de l'utilisateur connecté
  */
-router.get('/my', authenticateToken, async (req, res) => {
+router.get('/my', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const teamMemberships = await prisma.teamMember.findMany({
       where: {
@@ -96,9 +97,9 @@ router.get('/my', authenticateToken, async (req, res) => {
  * POST /api/teams
  * Créer une nouvelle équipe
  */
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { name, shortName, avatar, game, gameMode } = req.body;
 
     // Validation
@@ -240,10 +241,10 @@ router.post('/', authenticateToken, async (req, res) => {
  * GET /api/teams/:id
  * Récupérer les détails d'une équipe
  */
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const team = await prisma.team.findUnique({
       where: { id },
@@ -337,10 +338,10 @@ router.get('/:id', authenticateToken, async (req, res) => {
  * PUT /api/teams/:id
  * Modifier une équipe (seulement le créateur/capitaine)
  */
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { name, shortName, avatar, game, gameMode } = req.body;
 
     // Vérifier que l'équipe existe et que l'utilisateur est capitaine
@@ -465,10 +466,10 @@ router.put('/:id', authenticateToken, async (req, res) => {
  * POST /api/teams/:id/invite
  * Inviter un membre dans une équipe
  */
-router.post('/:id/invite', authenticateToken, async (req, res) => {
+router.post('/:id/invite', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id: teamId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { pseudo, message } = req.body;
 
     if (!pseudo) {
@@ -618,9 +619,9 @@ router.post('/:id/invite', authenticateToken, async (req, res) => {
  * GET /api/teams/invitations/received
  * Récupérer les invitations reçues par l'utilisateur
  */
-router.get('/invitations/received', authenticateToken, async (req, res) => {
+router.get('/invitations/received', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const invitations = await prisma.teamInvitation.findMany({
       where: {
@@ -681,10 +682,10 @@ router.get('/invitations/received', authenticateToken, async (req, res) => {
  * POST /api/teams/invitations/:id/respond
  * Répondre à une invitation d'équipe
  */
-router.post('/invitations/:id/respond', authenticateToken, async (req, res) => {
+router.post('/invitations/:id/respond', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id: invitationId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { response } = req.body; // 'ACCEPTED' ou 'DECLINED'
 
     if (!['ACCEPTED', 'DECLINED'].includes(response)) {
@@ -828,10 +829,10 @@ router.post('/invitations/:id/respond', authenticateToken, async (req, res) => {
  * DELETE /api/teams/:id/members/:memberId
  * Retirer un membre d'une équipe (capitaine seulement)
  */
-router.delete('/:id/members/:memberId', authenticateToken, async (req, res) => {
+router.delete('/:id/members/:memberId', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id: teamId, memberId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     // Vérifier que l'équipe existe et que l'utilisateur est capitaine
     const team = await prisma.team.findUnique({
@@ -898,10 +899,10 @@ router.delete('/:id/members/:memberId', authenticateToken, async (req, res) => {
  * DELETE /api/teams/:id
  * Dissoudre une équipe (créateur seulement)
  */
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id: teamId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const team = await prisma.team.findUnique({
       where: { id: teamId }
@@ -946,10 +947,10 @@ router.delete('/:id', authenticateToken, async (req, res) => {
  * POST /api/teams/:id/leave
  * Quitter une équipe (membres seulement, pas le capitaine)
  */
-router.post('/:id/leave', authenticateToken, async (req, res) => {
+router.post('/:id/leave', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id: teamId } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const membership = await prisma.teamMember.findUnique({
       where: {

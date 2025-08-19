@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types/auth';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -9,7 +10,7 @@ const prisma = new PrismaClient();
  * GET /api/search/users
  * Recherche d'utilisateurs par pseudo
  */
-router.get('/users', authenticateToken, async (req, res) => {
+router.get('/users', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { q } = req.query;
 
@@ -106,7 +107,7 @@ router.get('/users', authenticateToken, async (req, res) => {
  * GET /api/search/users/:pseudo
  * Récupérer un utilisateur spécifique par pseudo (pour profil public)
  */
-router.get('/users/:pseudo', authenticateToken, async (req, res) => {
+router.get('/users/:pseudo', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { pseudo } = req.params;
 

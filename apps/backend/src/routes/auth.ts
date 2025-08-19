@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { register, login, refreshToken, getMe, logout, updateProfile, changePassword } from '../controllers/authController';
 import { validateRegister, validateLogin } from '../middleware/validation';
 import { authenticateToken } from '../middleware/auth';
+import { AuthenticatedRequest } from '../types/auth';
 import discordAuthRoutes from './discordAuth';
 
 const router = Router();

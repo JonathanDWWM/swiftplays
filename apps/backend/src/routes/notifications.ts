@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { AuthenticatedRequest } from '../types/auth';
 import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 
@@ -9,9 +10,9 @@ const prisma = new PrismaClient();
  * GET /api/notifications
  * Récupérer les notifications de l'utilisateur connecté
  */
-router.get('/', authenticateToken, async (req, res) => {
+router.get('/', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
     const { limit = 20, offset = 0, unreadOnly = false } = req.query;
 
     const whereClause: any = { userId };
@@ -66,9 +67,9 @@ router.get('/', authenticateToken, async (req, res) => {
  * GET /api/notifications/unread-count
  * Récupérer uniquement le nombre de notifications non lues
  */
-router.get('/unread-count', authenticateToken, async (req, res) => {
+router.get('/unread-count', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const unreadCount = await prisma.notification.count({
       where: {
@@ -97,10 +98,10 @@ router.get('/unread-count', authenticateToken, async (req, res) => {
  * POST /api/notifications/:id/read
  * Marquer une notification comme lue
  */
-router.post('/:id/read', authenticateToken, async (req, res) => {
+router.post('/:id/read', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const notification = await prisma.notification.findUnique({
       where: { id }
@@ -148,9 +149,9 @@ router.post('/:id/read', authenticateToken, async (req, res) => {
  * POST /api/notifications/mark-all-read
  * Marquer toutes les notifications comme lues
  */
-router.post('/mark-all-read', authenticateToken, async (req, res) => {
+router.post('/mark-all-read', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     await prisma.notification.updateMany({
       where: {
@@ -182,10 +183,10 @@ router.post('/mark-all-read', authenticateToken, async (req, res) => {
  * DELETE /api/notifications/:id
  * Supprimer une notification
  */
-router.delete('/:id', authenticateToken, async (req, res) => {
+router.delete('/:id', authenticateToken, async (req: AuthenticatedRequest, res) => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
+    const userId = req.user!.userId;
 
     const notification = await prisma.notification.findUnique({
       where: { id }
