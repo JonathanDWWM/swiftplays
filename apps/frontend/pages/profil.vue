@@ -1,38 +1,7 @@
 <template>
   <div class="dashboard-layout">
     <!-- Sidebar Navigation -->
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <div class="logo-container">
-          <img src="/logo.png" alt="SwiftPlays" class="logo-image" />
-        </div>
-      </div>
-      
-      <nav class="sidebar-nav">
-        <ul class="nav-list">
-          <li class="nav-item">
-            <NuxtLink to="/dashboard" class="nav-link">
-              <span class="nav-text">Accueil</span>
-            </NuxtLink>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <span class="nav-text">Mon Équipe</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <span class="nav-text">Tournois</span>
-            </a>
-          </li>
-          <li class="nav-item">
-            <a href="#" class="nav-link">
-              <span class="nav-text">Classements</span>
-            </a>
-          </li>
-        </ul>
-      </nav>
-    </aside>
+    <Sidebar />
 
     <!-- Main Content Area -->
     <div class="main-content">
@@ -43,6 +12,9 @@
         </div>
         
         <div class="header-right">
+          <!-- Search Bar -->
+          <SearchBar />
+          
           <!-- User Menu -->
           <div class="user-menu">
             <button @click="toggleUserDropdown" class="user-button">
@@ -286,6 +258,8 @@
 <script setup lang="ts">
 import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
+import Sidebar from "~/components/Sidebar.vue"
+import SearchBar from "~/components/SearchBar.vue"
 
 // Configuration de la page
 definePageMeta({

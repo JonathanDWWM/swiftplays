@@ -26,6 +26,15 @@ model User {
   // Type de compte
   accountType     AccountType @default(EMAIL)
 
+  // Relations équipes
+  teamMemberships TeamMember[]
+  createdTeams    Team[]       @relation("TeamCreator")
+  sentInvitations TeamInvitation[] @relation("InvitationSender")
+  receivedInvitations TeamInvitation[] @relation("InvitationReceiver")
+  
+  // Relations notifications
+  notifications   Notification[]
+
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -43,5 +52,109 @@ enum AccountType {
   EMAIL    // Compte créé avec email/password
   DISCORD  // Compte créé via Discord OAuth
   HYBRID   // Compte email lié à Discord
+}
+
+model Team {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  shortName   String   @unique // Nom court (3 caractères max)
+  avatar      String?  // URL de l'avatar de l'équipe
+  game        String   // Jeu de l'équipe
+  gameMode    String   // Mode de jeu
+  
+  // Relations
+  creatorId   String
+  creator     User         @relation("TeamCreator", fields: [creatorId], references: [id])
+  members     TeamMember[]
+  invitations TeamInvitation[]
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("teams")
+}
+
+model TeamMember {
+  id     String   @id @default(cuid())
+  role   TeamRole @default(MEMBER)
+  
+  // Relations
+  userId String
+  teamId String
+  user   User   @relation(fields: [userId], references: [id])
+  team   Team   @relation(fields: [teamId], references: [id])
+  
+  // Timestamps
+  joinedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, teamId]) // Un utilisateur ne peut être qu'une fois dans une équipe
+  @@map("team_members")
+}
+
+model TeamInvitation {
+  id      String           @id @default(cuid())
+  status  InvitationStatus @default(PENDING)
+  message String?          // Message d'invitation optionnel
+  
+  // Relations
+  senderId   String
+  receiverId String
+  teamId     String
+  sender     User @relation("InvitationSender", fields: [senderId], references: [id])
+  receiver   User @relation("InvitationReceiver", fields: [receiverId], references: [id])
+  team       Team @relation(fields: [teamId], references: [id])
+  
+  // Timestamps
+  createdAt  DateTime @default(now())
+  respondedAt DateTime?
+  updatedAt  DateTime @updatedAt
+
+  @@unique([receiverId, teamId]) // Un utilisateur ne peut avoir qu'une invitation par équipe
+  @@map("team_invitations")
+}
+
+enum TeamRole {
+  MEMBER
+  CAPTAIN
+}
+
+enum InvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  CANCELLED
+}
+
+model Notification {
+  id       String           @id @default(cuid())
+  type     NotificationType
+  title    String           // Titre de la notification
+  message  String           // Message de la notification
+  data     Json?            // Données JSON additionnelles (ex: ID équipe, etc.)
+  isRead   Boolean          @default(false)
+  
+  // Relations
+  userId   String
+  user     User @relation(fields: [userId], references: [id])
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("notifications")
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+enum NotificationType {
+  TEAM_INVITATION       // Invitation à rejoindre une équipe
+  TEAM_INVITATION_ACCEPTED // Votre invitation a été acceptée
+  TEAM_INVITATION_DECLINED // Votre invitation a été refusée
+  TEAM_MEMBER_JOINED    // Un nouveau membre a rejoint votre équipe
+  TEAM_MEMBER_LEFT      // Un membre a quitté votre équipe
+  TEAM_DISSOLVED        // Une équipe dont vous étiez membre a été dissoute
+  SYSTEM                // Notification système générale
 }
 

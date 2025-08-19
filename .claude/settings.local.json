@@ -14,7 +14,11 @@
       "Bash(git push:*)",
       "Bash(ssh:*)",
       "Bash(move fontawesome.client.ts fontawesome.ts)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(mkdir:*)",
+      "Bash(cp:*)",
+      "Bash(npx prisma migrate dev:*)",
+      "Bash(npx prisma migrate reset:*)"
     ],
     "deny": []
   }

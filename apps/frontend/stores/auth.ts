@@ -40,6 +40,15 @@ export const useAuthStore = defineStore('auth', {
 
         setTokens(accessToken: string, refreshToken?: string) {
             this.accessToken = accessToken
+            
+            // Stocker l'accessToken dans un cookie
+            const accessTokenCookie = useCookie('accessToken', {
+                secure: process.env.NODE_ENV === 'production',
+                sameSite: 'strict',
+                maxAge: 15 * 60 // 15 minutes
+            })
+            accessTokenCookie.value = accessToken
+            
             if (refreshToken) {
                 localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
             }
@@ -57,6 +66,10 @@ export const useAuthStore = defineStore('auth', {
             this.error = null
             localStorage.removeItem(REFRESH_TOKEN_KEY)
             localStorage.removeItem(REMEMBER_ME_KEY)
+            
+            // Nettoyer le cookie accessToken
+            const accessTokenCookie = useCookie('accessToken')
+            accessTokenCookie.value = null
         },
 
         // 🌐 Appels API

@@ -10,6 +10,9 @@ import { PrismaClient } from '@prisma/client';
 // Import des routes
 import authRoutes from './routes/auth';
 import discordAuthRoutes from './routes/discordAuth';
+import searchRoutes from './routes/search';
+import teamsRoutes from './routes/teams';
+import notificationsRoutes from './routes/notifications';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -81,9 +84,17 @@ app.get('/health', async (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/auth', discordAuthRoutes);
 
+// Routes API - Recherche
+app.use('/api/search', searchRoutes);
+
+// Routes API - Équipes
+app.use('/api/teams', teamsRoutes);
+
+// Routes API - Notifications
+app.use('/api/notifications', notificationsRoutes);
+
 // Futures routes API
 // app.use('/api/users', userRoutes);
-// app.use('/api/teams', teamRoutes);
 // app.use('/api/matches', matchRoutes);
 
 // Socket.io pour le temps réel
@@ -154,5 +165,21 @@ server.listen(PORT, () => {
     console.log('   POST /api/auth/refresh - Refresh Token');
     console.log('   GET  /api/auth/me - Get User Profile');
     console.log('   POST /api/auth/logout - User Logout');
+    console.log('   GET  /api/search/users - Search Users');
+    console.log('   GET  /api/search/users/:pseudo - Get Public Profile');
+    console.log('   GET  /api/teams/my - Get My Teams');
+    console.log('   POST /api/teams - Create Team');
+    console.log('   GET  /api/teams/:id - Get Team Details');
+    console.log('   PUT  /api/teams/:id - Edit Team');
+    console.log('   DELETE /api/teams/:id - Delete Team');
+    console.log('   POST /api/teams/:id/invite - Invite Member');
+    console.log('   GET  /api/teams/invitations/received - Get Invitations');
+    console.log('   POST /api/teams/invitations/:id/respond - Respond to Invitation');
+    console.log('   DELETE /api/teams/:id/members/:memberId - Remove Member');
+    console.log('   POST /api/teams/:id/leave - Leave Team');
+    console.log('   GET  /api/notifications - Get Notifications');
+    console.log('   GET  /api/notifications/unread-count - Get Unread Count');
+    console.log('   POST /api/notifications/:id/read - Mark as Read');
+    console.log('   POST /api/notifications/mark-all-read - Mark All Read');
     console.log('========================================');
 });

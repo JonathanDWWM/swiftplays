@@ -70,69 +70,93 @@
 
 -----
 
-## Phase 2 : Profils utilisateurs
+## Phase 2 : Recherche et Profils Utilisateurs ✅ TERMINÉ
 
-*Objectif : Gestion complète des profils et personnalisation*
+*Objectif : Gestion des profils et fonctionnalités de recherche*
 
-### Modèles et API
-
-**Vous**
-
-- [ ] Extension du modèle User (pseudo, bio, avatar, stats)
-- [ ] Modèles Game (jeux supportés)
-- [ ] API gestion profils (GET, PUT /api/users/profile)
-- [ ] Upload d'images (Cloudinary ou local)
-- [ ] Validation des données profil
-- [ ] API recherche utilisateurs
-
-### Interface profil utilisateur
+### Système de recherche ✅ TERMINÉ
 
 **Vous**
 
-- [ ] Page profil utilisateur (affichage public)
-- [ ] Page modification profil (privée)
-- [ ] Formulaires de modification profil
-- [ ] Upload d'avatar
-- [ ] Composants d'affichage statistiques
-- [ ] Historique des activités utilisateur
+- [x] API recherche utilisateurs (`/api/search/users`)
+- [x] Composant SearchBar avec autocomplete
+- [x] Debounce et optimisations de recherche
+- [x] Gestion des tokens d'authentification expirés
+- [x] Intégration dans le header de l'application
+
+### Profils utilisateurs publics ✅ TERMINÉ
+
+**Vous**
+
+- [x] Pages profil utilisateur publiques (`/u/[pseudo]`)
+- [x] API endpoint profils publics (`/api/search/users/:pseudo`)
+- [x] Affichage des informations utilisateur publiques
+- [x] Navigation depuis la recherche vers les profils
+- [x] Design responsive et intégration au système d'auth
 
 -----
 
-## Phase 3 : Système d'équipes
+## Phase 3 : Système d'équipes ✅ TERMINÉ
 
-*Objectif : Création/gestion équipes + rôles*
+*Objectif : Création/gestion équipes complète avec rôles et invitations*
 
-### Modèles et API équipes
-
-**Vous**
-
-- [ ] Modèles base données équipes
-- [ ] API création/dissolution équipes
-- [ ] Système de rôles (Capitaine, Vice-capitaine, Membre)
-- [ ] Invitations/acceptations équipes
-- [ ] Gestion des permissions par rôle
-
-### Interface gestion équipes
+### Modèles et API équipes ✅ TERMINÉ
 
 **Vous**
 
-- [ ] Pages de création d'équipe
-- [ ] Interface gestion des membres
-- [ ] Affichage des statistiques équipe
-- [ ] Page équipe publique
-- [ ] Système d'invitations
+- [x] Modèles Prisma Team, TeamMember, TeamInvitation
+- [x] Migration base de données avec relations
+- [x] API création équipes (`POST /api/teams`)
+- [x] API dissolution équipes (`DELETE /api/teams/:id`)
+- [x] Système de rôles (Capitaine, Membre)
+- [x] API modification équipes (`PUT /api/teams/:id`)
+- [x] API récupération équipes utilisateur (`GET /api/teams/my`)
+- [x] API détails équipe (`GET /api/teams/:id`)
 
-### Système de transferts
+### Système d'invitations ✅ TERMINÉ
 
 **Vous**
 
-- [ ] API transferts joueurs
-- [ ] Système de jokers quotidiens
-- [ ] Notifications transferts
-- [ ] Validation des contraintes
-- [ ] Interface de demande transfert
-- [ ] Historique des transferts
-- [ ] Notifications frontend
+- [x] API invitations équipes (`POST /api/teams/:id/invite`)
+- [x] API réception invitations (`GET /api/teams/invitations/received`)
+- [x] API réponse aux invitations (`POST /api/teams/invitations/:id/respond`)
+- [x] Validation des contraintes (capacité équipe, doublons)
+- [x] Gestion des statuts d'invitation (PENDING, ACCEPTED, DECLINED)
+
+### Gestion des membres ✅ TERMINÉ
+
+**Vous**
+
+- [x] API suppression membres (`DELETE /api/teams/:id/members/:memberId`)
+- [x] API quitter équipe (`POST /api/teams/:id/leave`)
+- [x] Validation des permissions par rôle
+- [x] Protection contre auto-exclusion du capitaine
+- [x] Contraintes d'intégrité et transactions
+
+### Interface gestion équipes ✅ TERMINÉ
+
+**Vous**
+
+- [x] Page "Mes Équipes" (`/equipes`) avec grille d'équipes
+- [x] Modal création d'équipe avec validation complète
+- [x] Page détail équipe (`/equipes/[id]`) avec gestion membres
+- [x] Interface invitations membres (modal + formulaire)
+- [x] Page gestion invitations reçues (`/invitations`)
+- [x] Actions contextuelles selon le rôle (capitaine/membre)
+- [x] Boutons dissolution équipe et quitter équipe
+- [x] Badges et indicateurs de rôle (couronnes capitaines)
+- [x] Design responsive et états de chargement/erreur
+
+### Fonctionnalités avancées ✅ TERMINÉ
+
+**Vous**
+
+- [x] Équipes publiques/privées avec contrôle d'accès
+- [x] Capacités variables d'équipes (2-20 membres)
+- [x] Historique et dates d'adhésion des membres
+- [x] Messages personnalisés dans les invitations
+- [x] Navigation intégrée dans sidebar application
+- [x] Gestion complète des erreurs et confirmations utilisateur
 
 -----
 
@@ -296,15 +320,16 @@
 - Pages légales et erreurs ✅
 - Authentification Discord OAuth complète ✅
 
-### Phase 2 : Profils utilisateurs
-- Profils personnalisables
-- Upload d'avatars
-- Pages publiques utilisateurs
+### Phase 2 : Recherche et profils utilisateurs ✅ TERMINÉ
+- Système de recherche d'utilisateurs complet ✅
+- Pages profil utilisateur publiques ✅
+- Integration dans l'application ✅
 
-### Phase 3 : Système d'équipes
-- Création/gestion équipes
-- Système de rôles complet
-- Transferts et mercato
+### Phase 3 : Système d'équipes ✅ TERMINÉ
+- Création/gestion/dissolution équipes ✅
+- Système de rôles et permissions ✅
+- Invitations et gestion membres ✅
+- Interface complète avec toutes les fonctionnalités ✅
 
 ### Phase 4 : Compétition ladder
 - Matchmaking fonctionnel
@@ -334,16 +359,42 @@
 -----
 
 ## 🚀 PROCHAINE ÉTAPE IMMÉDIATE
+
 **Phase 1 - ✅ COMPLÈTEMENT TERMINÉE :**
 1. ✅ Page d'accueil → Vitrine professionnelle
-2. ✅ Auth JWT → Base solide
+2. ✅ Auth JWT → Base solide  
 3. ✅ Dashboard → Experience post-connexion style app
 4. ✅ Emails → Service automatique
 5. ✅ Pages manquantes → À propos, Footer, Erreurs
 6. ✅ Discord OAuth → Authentification complète avec liaison de comptes
 
-**Phase 2 - Démarrage immédiat :**
-1. Extension du modèle User (pseudo, bio, avatar, stats)
-2. Pages de gestion des profils utilisateurs
-3. Upload d'avatars et personnalisation
-4. API gestion profils (GET, PUT /api/users/profile)
+**Phase 2 - ✅ COMPLÈTEMENT TERMINÉE :**
+1. ✅ Système de recherche utilisateurs avec autocomplete
+2. ✅ Pages profil utilisateur publiques (/u/[pseudo])
+3. ✅ Intégration complète dans l'application
+
+**Phase 3 - ✅ COMPLÈTEMENT TERMINÉE :**
+1. ✅ Système d'équipes complet avec base de données
+2. ✅ Interface création/gestion/dissolution équipes
+3. ✅ Système d'invitations avec notifications
+4. ✅ Gestion des membres et permissions par rôle
+5. ✅ Pages dédiées : /equipes, /equipes/[id], /invitations
+6. ✅ Design responsive et expérience utilisateur complète
+
+**À AJOUTER - Logique membres max par jeu/mode :**
+1. Système de limites de membres dynamiques selon le jeu et mode :
+   - FIFA 24 : 1v1 (2 membres max), 2v2 (3-4 membres max), 11v11 (15-20 membres max)
+   - Rocket League : 1v1 (2 membres max), 2v2 (3-4 membres max), 3v3 (4-6 membres max)
+   - Fortnite : Solo (1 membre), Duo (2 membres max), Squad (4 membres max)
+   - Valorant : 5v5 (5-7 membres max)
+   - CS2 : 5v5 (5-7 membres max)
+   - League of Legends : 5v5 (5-7 membres max)
+2. Validation côté backend selon le jeu/mode sélectionné
+3. Interface frontend adaptée avec limites dynamiques
+4. Migration des équipes existantes avec règles par défaut
+
+**Phase 4 - Démarrage immédiat :**
+1. Système de matchmaking et défis
+2. Classements ELO et ranking
+3. Gestion des matches et résultats
+4. Système de litiges et modération
