@@ -305,10 +305,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         team: {
           id: team.id,
           name: team.name,
-          description: team.description,
           avatar: team.avatar,
-          isPublic: team.isPublic,
-          maxMembers: team.maxMembers,
           memberCount: team._count.members,
           myRole: userMembership?.role || null,
           creator: team.creator,
@@ -396,32 +393,8 @@ router.put('/:id', authenticateToken, async (req, res) => {
       updateData.name = name.trim();
     }
 
-    if (description !== undefined) {
-      if (description && description.length > 500) {
-        return res.status(400).json({
-          success: false,
-          message: 'La description ne peut pas dépasser 500 caractères'
-        });
-      }
-      updateData.description = description?.trim() || null;
-    }
-
     if (avatar !== undefined) {
       updateData.avatar = avatar || null;
-    }
-
-    if (isPublic !== undefined) {
-      updateData.isPublic = isPublic;
-    }
-
-    if (maxMembers !== undefined) {
-      if (maxMembers < 2 || maxMembers > 20) {
-        return res.status(400).json({
-          success: false,
-          message: 'Le nombre de membres doit être entre 2 et 20'
-        });
-      }
-      updateData.maxMembers = maxMembers;
     }
 
     const updatedTeam = await prisma.team.update({
@@ -462,10 +435,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
         team: {
           id: updatedTeam.id,
           name: updatedTeam.name,
-          description: updatedTeam.description,
           avatar: updatedTeam.avatar,
-          isPublic: updatedTeam.isPublic,
-          maxMembers: updatedTeam.maxMembers,
           memberCount: updatedTeam._count.members,
           myRole: 'CAPTAIN',
           creator: updatedTeam.creator,
@@ -532,13 +502,6 @@ router.post('/:id/invite', authenticateToken, async (req, res) => {
       });
     }
 
-    // Vérifier si l'équipe n'est pas pleine
-    if (team._count.members >= team.maxMembers) {
-      return res.status(400).json({
-        success: false,
-        message: 'L\'équipe a atteint sa capacité maximale'
-      });
-    }
 
     // Trouver l'utilisateur à inviter
     const targetUser = await prisma.user.findUnique({
@@ -765,13 +728,6 @@ router.post('/invitations/:id/respond', authenticateToken, async (req, res) => {
 
     // Si accepté, vérifier les contraintes
     if (response === 'ACCEPTED') {
-      // Vérifier que l'équipe n'est pas pleine
-      if (invitation.team._count.members >= invitation.team.maxMembers) {
-        return res.status(400).json({
-          success: false,
-          message: 'L\'équipe a atteint sa capacité maximale'
-        });
-      }
 
       // Vérifier que l'utilisateur n'est pas déjà membre
       const existingMember = await prisma.teamMember.findUnique({
