@@ -41,9 +41,6 @@
               <NuxtLink to="/profil" class="dropdown-item">
                 Mon Profil
               </NuxtLink>
-              <NuxtLink to="/dashboard" class="dropdown-item">
-                Accueil
-              </NuxtLink>
               <a href="#" class="dropdown-item">
                 Paramètres
               </a>
