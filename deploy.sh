@@ -19,7 +19,7 @@
 
       # Function to print colored output
       print_status() {
-          echo -e "${BLUE}$1${NC}"
+          echo -e "${RED}$1${NC}"
       }
 
       print_success() {
