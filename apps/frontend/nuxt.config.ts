@@ -48,7 +48,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBase: process.env.NODE_ENV === 'production'
-          ? 'https://swiftplays.fr/api'
+          ? 'https://swiftplays.fr'
           : 'http://localhost:3001'
     }
   }
