@@ -1,10 +1,9 @@
 import { Router } from 'express';
 import { AuthenticatedRequest } from '../types/auth';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
+import { prisma } from '../lib/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * GET /api/notifications

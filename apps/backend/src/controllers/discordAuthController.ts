@@ -1,10 +1,8 @@
 import { Request, Response } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { generateTokenPair } from '../utils/jwt';
 import { discordService } from '../services/discordService';
 import { emailService } from '../services/emailService';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
 
 /**
  * Redirige vers Discord pour l'authentification

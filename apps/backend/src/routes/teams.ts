@@ -1,11 +1,10 @@
 import { Router } from 'express';
-import { PrismaClient } from '@prisma/client';
 import { authenticateToken } from '../middleware/auth';
 import { NotificationService } from '../services/notificationService';
 import { AuthenticatedRequest } from '../types/auth';
+import { prisma } from '../lib/prisma';
 
 const router = Router();
-const prisma = new PrismaClient();
 
 /**
  * GET /api/teams/my
@@ -84,11 +83,23 @@ router.get('/my', authenticateToken, async (req: AuthenticatedRequest, res) => {
       }
     });
 
-  } catch (error) {
-    console.error('Erreur récupération équipes:', error);
+  } catch (error: any) {
+    console.error('❌ Erreur récupération équipes:', {
+      userId: req.user?.userId,
+      error: error.message,
+      stack: error.stack,
+      code: error.code,
+      meta: error.meta
+    });
     res.status(500).json({
       success: false,
-      message: 'Erreur interne du serveur'
+      message: 'Erreur de chargement, impossible de charger vos équipes',
+      ...(process.env.NODE_ENV === 'development' && { 
+        debug: { 
+          error: error.message,
+          code: error.code 
+        }
+      })
     });
   }
 });
@@ -669,11 +680,23 @@ router.get('/invitations/received', authenticateToken, async (req: Authenticated
       }
     });
 
-  } catch (error) {
-    console.error('Erreur récupération invitations:', error);
+  } catch (error: any) {
+    console.error('❌ Erreur récupération invitations:', {
+      userId: req.user?.userId,
+      error: error.message,
+      stack: error.stack,
+      code: error.code,
+      meta: error.meta
+    });
     res.status(500).json({
       success: false,
-      message: 'Erreur interne du serveur'
+      message: 'Erreur de chargement, impossible de charger vos invitations',
+      ...(process.env.NODE_ENV === 'development' && { 
+        debug: { 
+          error: error.message,
+          code: error.code 
+        }
+      })
     });
   }
 });

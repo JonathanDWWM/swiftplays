@@ -5,7 +5,7 @@ import morgan from 'morgan';
 import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from './lib/prisma';
 
 // Import des routes
 import authRoutes from './routes/auth';
@@ -26,8 +26,6 @@ const io = new Server(server, {
     }
 });
 
-// Initialiser Prisma
-const prisma = new PrismaClient();
 
 const PORT = process.env.PORT || 3001;
 

@@ -1,12 +1,10 @@
 import { Request, Response } from 'express';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
-import { PrismaClient } from '@prisma/client';
 import { hashPassword, comparePassword } from '../utils/password';
 import { generateTokenPair, verifyRefreshToken, generateAccessToken } from '../utils/jwt';
 import { RegisterRequest, LoginRequest, AuthResponse, AuthenticatedRequest, ErrorResponse } from '../types/auth';
 import { emailService } from '../services/emailService';
-
-const prisma = new PrismaClient();
+import { prisma } from '../lib/prisma';
 
 /**
  * Inscription d'un nouvel utilisateur
