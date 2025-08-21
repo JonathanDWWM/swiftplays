@@ -1,23 +1,47 @@
--- CreateEnum
-CREATE TYPE "Role" AS ENUM ('USER', 'MODERATOR', 'ADMIN');
+-- CreateEnum (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE TYPE "Role" AS ENUM ('USER', 'MODERATOR', 'ADMIN');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "AccountType" AS ENUM ('EMAIL', 'DISCORD', 'HYBRID');
+-- CreateEnum (si n'existe pas déjà)  
+DO $$ BEGIN
+    CREATE TYPE "AccountType" AS ENUM ('EMAIL', 'DISCORD', 'HYBRID');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "NotificationType" AS ENUM ('SYSTEM');
+-- CreateEnum (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE TYPE "NotificationType" AS ENUM ('SYSTEM');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "MessageType" AS ENUM ('SYSTEM_WELCOME', 'SYSTEM_UPDATE', 'SYSTEM_MAINTENANCE', 'MATCH_CHALLENGE', 'MATCH_RESULT', 'TOURNAMENT_INVITE', 'PRIVATE_MESSAGE', 'LOBBY_INVITE');
+-- CreateEnum (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE TYPE "MessageType" AS ENUM ('SYSTEM_WELCOME', 'SYSTEM_UPDATE', 'SYSTEM_MAINTENANCE', 'MATCH_CHALLENGE', 'MATCH_RESULT', 'TOURNAMENT_INVITE', 'PRIVATE_MESSAGE', 'LOBBY_INVITE');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "MessageCategory" AS ENUM ('NOTIFICATION', 'INVITATION', 'SYSTEM', 'PRIVATE', 'LOBBY');
+-- CreateEnum (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE TYPE "MessageCategory" AS ENUM ('NOTIFICATION', 'INVITATION', 'SYSTEM', 'PRIVATE', 'LOBBY');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateEnum
-CREATE TYPE "Priority" AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT');
+-- CreateEnum (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE TYPE "Priority" AS ENUM ('LOW', 'NORMAL', 'HIGH', 'URGENT');
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- CreateTable
-CREATE TABLE "users" (
+-- CreateTable (si n'existe pas déjà)
+CREATE TABLE IF NOT EXISTS "users" (
     "id" TEXT NOT NULL,
     "email" TEXT NOT NULL,
     "password" TEXT,
@@ -37,8 +61,8 @@ CREATE TABLE "users" (
     CONSTRAINT "users_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "notifications" (
+-- CreateTable (si n'existe pas déjà)
+CREATE TABLE IF NOT EXISTS "notifications" (
     "id" TEXT NOT NULL,
     "type" "NotificationType" NOT NULL,
     "title" TEXT NOT NULL,
@@ -52,8 +76,8 @@ CREATE TABLE "notifications" (
     CONSTRAINT "notifications_pkey" PRIMARY KEY ("id")
 );
 
--- CreateTable
-CREATE TABLE "messages" (
+-- CreateTable (si n'existe pas déjà)
+CREATE TABLE IF NOT EXISTS "messages" (
     "id" TEXT NOT NULL,
     "type" "MessageType" NOT NULL,
     "category" "MessageCategory" NOT NULL DEFAULT 'NOTIFICATION',
@@ -72,35 +96,79 @@ CREATE TABLE "messages" (
     CONSTRAINT "messages_pkey" PRIMARY KEY ("id")
 );
 
--- CreateIndex
-CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE UNIQUE INDEX "users_email_key" ON "users"("email");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE UNIQUE INDEX "users_pseudo_key" ON "users"("pseudo");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE UNIQUE INDEX "users_pseudo_key" ON "users"("pseudo");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE UNIQUE INDEX "users_discordId_key" ON "users"("discordId");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE UNIQUE INDEX "users_discordId_key" ON "users"("discordId");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE INDEX "notifications_userId_isRead_idx" ON "notifications"("userId", "isRead");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE INDEX "notifications_userId_isRead_idx" ON "notifications"("userId", "isRead");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE INDEX "notifications_userId_createdAt_idx" ON "notifications"("userId", "createdAt");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE INDEX "notifications_userId_createdAt_idx" ON "notifications"("userId", "createdAt");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE INDEX "messages_receiverId_isRead_idx" ON "messages"("receiverId", "isRead");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE INDEX "messages_receiverId_isRead_idx" ON "messages"("receiverId", "isRead");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE INDEX "messages_receiverId_createdAt_idx" ON "messages"("receiverId", "createdAt");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE INDEX "messages_receiverId_createdAt_idx" ON "messages"("receiverId", "createdAt");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- CreateIndex
-CREATE INDEX "messages_receiverId_category_idx" ON "messages"("receiverId", "category");
+-- CreateIndex (si n'existe pas déjà)
+DO $$ BEGIN
+    CREATE INDEX "messages_receiverId_category_idx" ON "messages"("receiverId", "category");
+EXCEPTION
+    WHEN duplicate_table THEN null;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- AddForeignKey (si n'existe pas déjà)
+DO $$ BEGIN
+    ALTER TABLE "notifications" ADD CONSTRAINT "notifications_userId_fkey" FOREIGN KEY ("userId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+-- AddForeignKey (si n'existe pas déjà)
+DO $$ BEGIN
+    ALTER TABLE "messages" ADD CONSTRAINT "messages_senderId_fkey" FOREIGN KEY ("senderId") REFERENCES "users"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "messages" ADD CONSTRAINT "messages_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+-- AddForeignKey (si n'existe pas déjà)
+DO $$ BEGIN
+    ALTER TABLE "messages" ADD CONSTRAINT "messages_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "users"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
