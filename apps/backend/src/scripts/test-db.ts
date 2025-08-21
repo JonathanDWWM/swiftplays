@@ -16,17 +16,17 @@ async function testDatabaseConnection() {
     const userCount = await prisma.user.count();
     console.log(`✅ ${userCount} utilisateurs dans la base`);
 
-    // Test 3: Test des équipes
-    console.log('\n3. Test de récupération équipes...');
-    const teamCount = await prisma.team.count();
-    console.log(`✅ ${teamCount} équipes dans la base`);
+    // Test 3: Test des messages
+    console.log('\n3. Test de récupération messages...');
+    const messageCount = await prisma.message.count();
+    console.log(`✅ ${messageCount} messages dans la base`);
 
-    // Test 4: Test des invitations
-    console.log('\n4. Test de récupération invitations...');
-    const invitationCount = await prisma.teamInvitation.count();
-    console.log(`✅ ${invitationCount} invitations dans la base`);
+    // Test 4: Test des notifications
+    console.log('\n4. Test de récupération notifications...');
+    const notificationCount = await prisma.notification.count();
+    console.log(`✅ ${notificationCount} notifications dans la base`);
 
-    // Test 5: Test d'une requête complexe similaire à celle qui échoue
+    // Test 5: Test d'une requête complexe
     console.log('\n5. Test requête complexe...');
     const testUser = await prisma.user.findFirst({
       select: { id: true, pseudo: true }
@@ -35,48 +35,27 @@ async function testDatabaseConnection() {
     if (testUser) {
       console.log(`✅ Utilisateur test trouvé: ${testUser.pseudo}`);
       
-      // Simuler la requête d'équipes qui échoue
-      const teamMemberships = await prisma.teamMember.findMany({
+      // Tester les messages de cet utilisateur
+      const userMessages = await prisma.message.findMany({
         where: {
-          userId: testUser.id
+          receiverId: testUser.id
         },
         include: {
-          team: {
-            include: {
-              creator: {
-                select: {
-                  id: true,
-                  pseudo: true,
-                  avatar: true,
-                  discordAvatar: true
-                }
-              },
-              members: {
-                include: {
-                  user: {
-                    select: {
-                      id: true,
-                      pseudo: true,
-                      avatar: true,
-                      discordAvatar: true
-                    }
-                  }
-                }
-              },
-              _count: {
-                select: {
-                  members: true
-                }
-              }
+          sender: {
+            select: {
+              id: true,
+              pseudo: true,
+              avatar: true,
+              discordAvatar: true
             }
           }
         },
         orderBy: {
-          joinedAt: 'desc'
+          createdAt: 'desc'
         }
       });
       
-      console.log(`✅ ${teamMemberships.length} équipes trouvées pour ${testUser.pseudo}`);
+      console.log(`✅ ${userMessages.length} messages trouvés pour ${testUser.pseudo}`);
     } else {
       console.log('ℹ️ Aucun utilisateur trouvé');
     }

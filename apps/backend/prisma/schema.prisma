@@ -27,12 +27,13 @@ model User {
   accountType     AccountType @default(EMAIL)
 
   // Relations équipes
-  teamMemberships TeamMember[]
-  createdTeams    Team[]       @relation("TeamCreator")
-  sentInvitations TeamInvitation[] @relation("InvitationSender")
-  receivedInvitations TeamInvitation[] @relation("InvitationReceiver")
+  ownedTeams      Team[]       @relation("TeamOwner")
   
-  // Relations notifications
+  // Relations messages
+  sentMessages     Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  // Relations notifications (à supprimer après migration)
   notifications   Notification[]
 
   // Timestamps
@@ -56,17 +57,17 @@ enum AccountType {
 
 model Team {
   id          String   @id @default(cuid())
-  name        String   @unique
-  shortName   String   @unique // Nom court (3 caractères max)
+  name        String   @unique // Nom unique de l'équipe
+  shortName   String   @unique // Nom court (3 caractères)
+  description String?  // Description optionnelle
   avatar      String?  // URL de l'avatar de l'équipe
-  game        String   // Jeu de l'équipe
-  gameMode    String   // Mode de jeu
+  game        Game     // Jeu de l'équipe
+  gameMode    String   // Mode de jeu selon le jeu
+  maxMembers  Int      // Limite de membres selon le jeu/mode
   
   // Relations
-  creatorId   String
-  creator     User         @relation("TeamCreator", fields: [creatorId], references: [id])
-  members     TeamMember[]
-  invitations TeamInvitation[]
+  ownerId     String
+  owner       User     @relation("TeamOwner", fields: [ownerId], references: [id])
   
   // Timestamps
   createdAt   DateTime @default(now())
@@ -75,57 +76,12 @@ model Team {
   @@map("teams")
 }
 
-model TeamMember {
-  id     String   @id @default(cuid())
-  role   TeamRole @default(MEMBER)
-  
-  // Relations
-  userId String
-  teamId String
-  user   User   @relation(fields: [userId], references: [id])
-  team   Team   @relation(fields: [teamId], references: [id])
-  
-  // Timestamps
-  joinedAt  DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@unique([userId, teamId]) // Un utilisateur ne peut être qu'une fois dans une équipe
-  @@map("team_members")
+enum Game {
+  FC_26               // FIFA 26 - 1v1, 2v2, 5v5
+  CALL_OF_DUTY_BO7    // Call of Duty Black Ops 7 - 1v1, 2v2, 4v4
 }
 
-model TeamInvitation {
-  id      String           @id @default(cuid())
-  status  InvitationStatus @default(PENDING)
-  message String?          // Message d'invitation optionnel
-  
-  // Relations
-  senderId   String
-  receiverId String
-  teamId     String
-  sender     User @relation("InvitationSender", fields: [senderId], references: [id])
-  receiver   User @relation("InvitationReceiver", fields: [receiverId], references: [id])
-  team       Team @relation(fields: [teamId], references: [id])
-  
-  // Timestamps
-  createdAt  DateTime @default(now())
-  respondedAt DateTime?
-  updatedAt  DateTime @updatedAt
 
-  @@unique([receiverId, teamId]) // Un utilisateur ne peut avoir qu'une invitation par équipe
-  @@map("team_invitations")
-}
-
-enum TeamRole {
-  MEMBER
-  CAPTAIN
-}
-
-enum InvitationStatus {
-  PENDING
-  ACCEPTED
-  DECLINED
-  CANCELLED
-}
 
 model Notification {
   id       String           @id @default(cuid())
@@ -149,12 +105,69 @@ model Notification {
 }
 
 enum NotificationType {
-  TEAM_INVITATION       // Invitation à rejoindre une équipe
-  TEAM_INVITATION_ACCEPTED // Votre invitation a été acceptée
-  TEAM_INVITATION_DECLINED // Votre invitation a été refusée
-  TEAM_MEMBER_JOINED    // Un nouveau membre a rejoint votre équipe
-  TEAM_MEMBER_LEFT      // Un membre a quitté votre équipe
-  TEAM_DISSOLVED        // Une équipe dont vous étiez membre a été dissoute
   SYSTEM                // Notification système générale
+}
+
+model Message {
+  id          String        @id @default(cuid())
+  type        MessageType   
+  category    MessageCategory @default(NOTIFICATION)
+  title       String        
+  content     String        
+  isRead      Boolean       @default(false)
+  
+  // Actions intégrées (JSON)
+  actions     Json?         // Boutons dynamiques : accepter/refuser/voir/etc.
+  data        Json?         // Données contextuelles (teamId, invitationId, etc.)
+  
+  // Relations
+  senderId    String?       // Optionnel pour messages système
+  receiverId  String
+  sender      User?         @relation("SentMessages", fields: [senderId], references: [id])
+  receiver    User          @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  
+  // Métadonnées
+  priority    Priority      @default(NORMAL)
+  expiresAt   DateTime?     // Pour invitations avec timeout
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@map("messages")
+  @@index([receiverId, isRead])
+  @@index([receiverId, createdAt])
+  @@index([receiverId, category])
+}
+
+enum MessageType {
+  // Système
+  SYSTEM_WELCOME
+  SYSTEM_UPDATE
+  SYSTEM_MAINTENANCE
+  
+  // Futur : Compétition
+  MATCH_CHALLENGE
+  MATCH_RESULT
+  TOURNAMENT_INVITE
+  
+  // Futur : Social
+  PRIVATE_MESSAGE
+  LOBBY_INVITE
+}
+
+enum MessageCategory {
+  NOTIFICATION    // Notifications classiques
+  INVITATION     // Nécessitent une action
+  SYSTEM         // Messages système
+  PRIVATE        // Messages privés (futur)
+  LOBBY          // Invitations lobby (futur)
+}
+
+enum Priority {
+  LOW
+  NORMAL  
+  HIGH
+  URGENT
 }
 

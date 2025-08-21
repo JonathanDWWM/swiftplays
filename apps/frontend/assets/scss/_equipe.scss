@@ -1,0 +1,820 @@
+// Import des styles de base
+@use 'sass:color';
+@use 'variables' as *;
+
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: $bg-primary;
+}
+
+// Sidebar (réutilisé du dashboard)
+.sidebar {
+  width: 280px;
+  background: linear-gradient(145deg, rgba(26, 26, 26, 0.95) 0%, rgba(20, 20, 20, 0.98) 100%);
+  border-right: 1px solid rgba(59, 130, 214, 0.1);
+  position: fixed;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+// Main content
+.main-content {
+  margin-left: 280px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.top-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  background: rgba(26, 26, 26, 0.9);
+  border-bottom: 1px solid rgba(59, 130, 214, 0.1);
+  backdrop-filter: blur(10px);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+}
+
+.page-title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0;
+}
+
+.header-right {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.user-menu {
+  position: relative;
+
+  .user-button {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.5rem 1rem;
+    background: rgba(26, 26, 26, 0.8);
+    border: 1px solid rgba(59, 130, 214, 0.2);
+    border-radius: 8px;
+    color: $text-primary;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: rgba(59, 130, 214, 0.1);
+      border-color: rgba(59, 130, 214, 0.3);
+    }
+  }
+
+  .user-avatar, .user-avatar-image {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $accent-primary;
+    color: white;
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .user-avatar-image {
+    object-fit: cover;
+  }
+
+  .user-name {
+    font-weight: 600;
+    font-size: 0.875rem;
+  }
+
+  .user-dropdown {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    margin-top: 0.5rem;
+    background: rgba(26, 26, 26, 0.95);
+    border: 1px solid rgba(59, 130, 214, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(10px);
+    min-width: 200px;
+    overflow: hidden;
+    z-index: 1000;
+
+    .dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 0.75rem 1rem;
+      color: $text-secondary;
+      text-decoration: none;
+      border: none;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(59, 130, 214, 0.1);
+        color: $text-primary;
+      }
+
+      &.logout-item {
+        color: #ef4444;
+        border-top: 1px solid rgba(59, 130, 214, 0.1);
+
+        &:hover {
+          background: rgba(239, 68, 68, 0.1);
+        }
+      }
+    }
+
+    .dropdown-divider {
+      height: 1px;
+      background: rgba(59, 130, 214, 0.1);
+      margin: 0.5rem 0;
+    }
+  }
+}
+
+// Page content
+.page-content {
+  flex: 1;
+  padding: 2rem;
+}
+
+.content-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+// États de chargement et d'erreur
+.loading-state, .error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  color: $text-secondary;
+
+  .loading-spinner {
+    width: 40px;
+    height: 40px;
+    border: 3px solid rgba(59, 130, 214, 0.2);
+    border-top: 3px solid $accent-primary;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+  }
+
+  .error-icon {
+    font-size: 3rem;
+    color: #ef4444;
+    margin-bottom: 1rem;
+  }
+
+  h3 {
+    color: $text-primary;
+    margin: 0 0 0.5rem 0;
+  }
+
+  p {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.1rem;
+  }
+
+  .retry-btn {
+    padding: 0.75rem 1.5rem;
+    background: $accent-primary;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      background: color.adjust($accent-primary, $lightness: 10%);
+      transform: translateY(-1px);
+    }
+  }
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+// Sections d'équipe
+.team-section {
+  background: rgba(26, 26, 26, 0.9);
+  border: 1px solid rgba(59, 130, 214, 0.1);
+  border-radius: 12px;
+  padding: 2rem;
+  margin-bottom: 2rem;
+}
+
+.section-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin: 0 0 1.5rem 0;
+}
+
+// Section header d'équipe
+.header-section {
+  .team-header-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .team-avatar-container {
+    position: relative;
+  }
+
+  .team-avatar-preview {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    border-radius: 12px;
+    overflow: hidden;
+    border: 2px solid rgba(59, 130, 214, 0.2);
+
+    .team-avatar-image {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .avatar-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    &:hover .avatar-overlay {
+      opacity: 1;
+    }
+
+    .change-avatar-btn {
+      background: $accent-primary;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: background 0.2s ease;
+
+      &:hover {
+        background: color.adjust($accent-primary, $lightness: 10%);
+      }
+    }
+  }
+
+  .team-info {
+    flex: 1;
+  }
+
+  .team-name-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+
+    .team-name {
+      font-size: 2rem;
+      font-weight: 700;
+      color: $text-primary;
+      margin: 0;
+    }
+
+    .team-short-name {
+      background: rgba(59, 130, 214, 0.1);
+      color: $accent-primary;
+      padding: 0.25rem 0.75rem;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      border: 1px solid rgba(59, 130, 214, 0.2);
+    }
+  }
+
+  .team-details {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  .team-detail-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: rgba(59, 130, 214, 0.05);
+    border: 1px solid rgba(59, 130, 214, 0.1);
+    border-radius: 8px;
+
+    .detail-label {
+      color: $text-secondary;
+      font-weight: 500;
+    }
+
+    .detail-value {
+      color: $text-primary;
+      font-weight: 600;
+    }
+  }
+
+  .team-actions {
+    display: flex;
+    gap: 1rem;
+
+    .edit-team-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: $accent-primary;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: color.adjust($accent-primary, $lightness: 10%);
+        transform: translateY(-1px);
+      }
+    }
+
+    .delete-team-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(239, 68, 68, 0.2);
+        transform: translateY(-1px);
+      }
+    }
+  }
+}
+
+// Badges de jeu
+.game-badge {
+  display: inline-block;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+
+  &--league-of-legends {
+    background: rgba(200, 155, 60, 0.1);
+    color: #c89b3c;
+    border: 1px solid rgba(200, 155, 60, 0.2);
+  }
+
+  &--valorant {
+    background: rgba(255, 70, 85, 0.1);
+    color: #ff4655;
+    border: 1px solid rgba(255, 70, 85, 0.2);
+  }
+
+  &--counter-strike-2 {
+    background: rgba(249, 166, 2, 0.1);
+    color: #f9a602;
+    border: 1px solid rgba(249, 166, 2, 0.2);
+  }
+
+  &--rocket-league {
+    background: rgba(0, 121, 255, 0.1);
+    color: #0079ff;
+    border: 1px solid rgba(0, 121, 255, 0.2);
+  }
+
+  &--overwatch-2 {
+    background: rgba(255, 153, 0, 0.1);
+    color: #f99e1a;
+    border: 1px solid rgba(255, 153, 0, 0.2);
+  }
+
+  &--apex-legends {
+    background: rgba(255, 110, 0, 0.1);
+    color: #ff6e00;
+    border: 1px solid rgba(255, 110, 0, 0.2);
+  }
+}
+
+// Section description
+.description-section {
+  .team-description {
+    color: $text-secondary;
+    font-size: 1.1rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+}
+
+// Section membres
+.members-section {
+  .members-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  .member-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem;
+    background: rgba(59, 130, 214, 0.05);
+    border: 1px solid rgba(59, 130, 214, 0.1);
+    border-radius: 8px;
+    transition: all 0.2s ease;
+
+    &.owner-card {
+      background: rgba(34, 197, 94, 0.05);
+      border-color: rgba(34, 197, 94, 0.2);
+    }
+
+    &.empty-slot {
+      background: rgba(107, 114, 128, 0.05);
+      border-color: rgba(107, 114, 128, 0.1);
+      opacity: 0.7;
+
+      .empty-avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: rgba(107, 114, 128, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $text-secondary;
+        border: 2px dashed rgba(107, 114, 128, 0.3);
+      }
+    }
+
+    &:hover:not(.empty-slot) {
+      background: rgba(59, 130, 214, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .member-avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(59, 130, 214, 0.3);
+    }
+
+    .member-info {
+      flex: 1;
+
+      .member-name {
+        display: block;
+        color: $text-primary;
+        font-weight: 600;
+        margin-bottom: 0.25rem;
+      }
+
+      .member-role {
+        display: block;
+        color: $text-secondary;
+        font-size: 0.875rem;
+
+        &.owner-role {
+          color: #22c55e;
+          font-weight: 600;
+        }
+      }
+    }
+  }
+}
+
+// Modales
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  background: rgba(26, 26, 26, 0.95);
+  border: 1px solid rgba(59, 130, 214, 0.2);
+  border-radius: 12px;
+  max-width: 500px;
+  width: 90%;
+  max-height: 90vh;
+  overflow-y: auto;
+  backdrop-filter: blur(10px);
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    border-bottom: 1px solid rgba(59, 130, 214, 0.1);
+
+    h3 {
+      color: $text-primary;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close {
+      background: transparent;
+      border: none;
+      color: $text-secondary;
+      cursor: pointer;
+      font-size: 1.25rem;
+      padding: 0.25rem;
+      border-radius: 4px;
+      transition: all 0.2s ease;
+
+      &:hover {
+        color: $text-primary;
+        background: rgba(59, 130, 214, 0.1);
+      }
+    }
+  }
+
+  &.delete-modal {
+    .delete-content {
+      padding: 2rem;
+      text-align: center;
+
+      .warning-icon {
+        font-size: 3rem;
+        color: #ef4444;
+        margin-bottom: 1rem;
+      }
+
+      p {
+        color: $text-primary;
+        margin: 0.5rem 0;
+        
+        strong {
+          color: $accent-primary;
+        }
+      }
+
+      .warning-text {
+        color: #ef4444;
+        font-weight: 600;
+        font-size: 0.875rem;
+      }
+    }
+  }
+}
+
+// Formulaires
+.edit-form {
+  padding: 2rem;
+
+  .form-group {
+    margin-bottom: 1.5rem;
+
+    .form-label {
+      display: block;
+      color: $text-primary;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .form-input, .form-textarea {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      background: rgba(26, 26, 26, 0.5);
+      border: 1px solid rgba(59, 130, 214, 0.2);
+      border-radius: 6px;
+      color: $text-primary;
+      font-size: 1rem;
+      transition: all 0.2s ease;
+
+      &:focus {
+        outline: none;
+        border-color: $accent-primary;
+        box-shadow: 0 0 0 3px rgba(59, 130, 214, 0.1);
+      }
+
+      &--error {
+        border-color: #ef4444;
+      }
+
+      &::placeholder {
+        color: $text-secondary;
+      }
+    }
+
+    .form-textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+
+    .form-error {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: block;
+    }
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(59, 130, 214, 0.1);
+
+    .cancel-btn {
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      color: $text-secondary;
+      border: 1px solid rgba(59, 130, 214, 0.2);
+      border-radius: 6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover {
+        background: rgba(59, 130, 214, 0.1);
+        color: $text-primary;
+      }
+    }
+
+    .save-btn {
+      padding: 0.75rem 1.5rem;
+      background: $accent-primary;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: color.adjust($accent-primary, $lightness: 10%);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    .delete-btn {
+      padding: 0.75rem 1.5rem;
+      background: #ef4444;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+
+      &:hover:not(:disabled) {
+        background: color.adjust(#ef4444, $lightness: 10%);
+      }
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+  }
+}
+
+// Alertes
+.success-alert, .error-alert {
+  padding: 1rem 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.success-alert {
+  background: rgba(34, 197, 94, 0.1);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+
+  .success-icon {
+    font-size: 1.25rem;
+  }
+}
+
+.error-alert {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+}
+
+// Responsive
+@media (max-width: 1024px) {
+  .sidebar {
+    transform: translateX(-100%);
+  }
+
+  .main-content {
+    margin-left: 0;
+  }
+
+  .header-section .team-header-content {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .team-details {
+    grid-template-columns: 1fr;
+  }
+
+  .members-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .page-content {
+    padding: 1rem;
+  }
+
+  .team-section {
+    padding: 1.5rem;
+  }
+
+  .top-header {
+    padding: 1rem;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .header-right {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .team-actions {
+    flex-direction: column;
+    
+    .edit-team-btn,
+    .delete-team-btn {
+      justify-content: center;
+    }
+  }
+
+  .modal-content {
+    margin: 1rem;
+    width: calc(100% - 2rem);
+  }
+
+  .edit-form .form-actions {
+    flex-direction: column;
+    
+    .cancel-btn,
+    .save-btn,
+    .delete-btn {
+      width: 100%;
+    }
+  }
+}

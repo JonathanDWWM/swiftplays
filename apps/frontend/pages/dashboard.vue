@@ -15,8 +15,8 @@
           <!-- Search Bar -->
           <SearchBar />
           
-          <!-- Notification Bell -->
-          <NotificationBell />
+          <!-- Message Center -->
+          <MessageCenter />
           
           <!-- User Menu -->
           <div class="user-menu">
@@ -109,7 +109,7 @@ import { onMounted, onUnmounted, ref } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import Sidebar from "~/components/Sidebar.vue";
 import SearchBar from "~/components/SearchBar.vue";
-import NotificationBell from "~/components/NotificationBell.vue";
+import MessageCenter from "~/components/MessageCenter.vue";
 
 // Configuration de la page
 definePageMeta({

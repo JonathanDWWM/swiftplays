@@ -13,6 +13,7 @@ import discordAuthRoutes from './routes/discordAuth';
 import searchRoutes from './routes/search';
 import teamsRoutes from './routes/teams';
 import notificationsRoutes from './routes/notifications';
+import messagesRoutes from './routes/messages';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -38,6 +39,9 @@ app.use(cors({
 app.use(morgan('combined'));
 app.use(express.json({ limit: '10mb' })); // Augmenté pour les uploads futurs
 app.use(express.urlencoded({ extended: true }));
+
+// Servir les fichiers statiques pour les uploads
+app.use('/uploads', express.static('uploads'));
 
 // Routes de base
 app.get('/', (req, res) => {
@@ -90,6 +94,9 @@ app.use('/api/teams', teamsRoutes);
 
 // Routes API - Notifications
 app.use('/api/notifications', notificationsRoutes);
+
+// Routes API - Messages (nouveau système unifié)
+app.use('/api/messages', messagesRoutes);
 
 // Futures routes API
 // app.use('/api/users', userRoutes);
@@ -165,16 +172,11 @@ server.listen(PORT, () => {
     console.log('   POST /api/auth/logout - User Logout');
     console.log('   GET  /api/search/users - Search Users');
     console.log('   GET  /api/search/users/:pseudo - Get Public Profile');
-    console.log('   GET  /api/teams/my - Get My Teams');
     console.log('   POST /api/teams - Create Team');
-    console.log('   GET  /api/teams/:id - Get Team Details');
-    console.log('   PUT  /api/teams/:id - Edit Team');
+    console.log('   GET  /api/teams/my - Get My Teams');
+    console.log('   GET  /api/teams/:id - Get Team by ID');
+    console.log('   PUT  /api/teams/:id - Update Team');
     console.log('   DELETE /api/teams/:id - Delete Team');
-    console.log('   POST /api/teams/:id/invite - Invite Member');
-    console.log('   GET  /api/teams/invitations/received - Get Invitations');
-    console.log('   POST /api/teams/invitations/:id/respond - Respond to Invitation');
-    console.log('   DELETE /api/teams/:id/members/:memberId - Remove Member');
-    console.log('   POST /api/teams/:id/leave - Leave Team');
     console.log('   GET  /api/notifications - Get Notifications');
     console.log('   GET  /api/notifications/unread-count - Get Unread Count');
     console.log('   POST /api/notifications/:id/read - Mark as Read');
