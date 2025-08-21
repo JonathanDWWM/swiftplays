@@ -518,3 +518,229 @@ export const deleteTeam = async (req: AuthenticatedRequest, res: Response) => {
     });
   }
 };
+
+/**
+ * Mettre à jour le rôle d'un membre de l'équipe
+ */
+export const updateMemberRole = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { teamId, memberId } = req.params;
+    const { role } = req.body;
+    const userId = req.user!.userId;
+
+    // Vérifier si l'équipe existe et récupérer les membres
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                pseudo: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Équipe introuvable'
+      });
+    }
+
+    // Vérifier si l'utilisateur a les droits (propriétaire uniquement pour modifier les rôles)
+    if (team.ownerId !== userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seul le propriétaire peut modifier les rôles des membres'
+      });
+    }
+
+    // Vérifier si le rôle est valide
+    const validRoles = ['MEMBER', 'CO_CAPTAIN'];
+    if (!validRoles.includes(role)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Rôle invalide. Les rôles autorisés sont : MEMBER, CO_CAPTAIN'
+      });
+    }
+
+    // Vérifier si le membre existe dans l'équipe
+    const member = await prisma.teamMember.findUnique({
+      where: {
+        teamId_userId: {
+          teamId: teamId,
+          userId: memberId
+        }
+      }
+    });
+
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membre introuvable dans cette équipe'
+      });
+    }
+
+    // Ne pas permettre de modifier le rôle du propriétaire
+    if (memberId === team.ownerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Impossible de modifier le rôle du propriétaire'
+      });
+    }
+
+    // Mettre à jour le rôle du membre
+    const updatedMember = await prisma.teamMember.update({
+      where: {
+        teamId_userId: {
+          teamId: teamId,
+          userId: memberId
+        }
+      },
+      data: {
+        role: role as any
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            pseudo: true,
+            avatar: true,
+            discordAvatar: true
+          }
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: updatedMember,
+      message: 'Rôle mis à jour avec succès'
+    });
+
+  } catch (error) {
+    console.error('Erreur mise à jour rôle membre:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur interne du serveur'
+    });
+  }
+};
+
+/**
+ * Exclure un membre de l'équipe
+ */
+export const kickMember = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { teamId, memberId } = req.params;
+    const userId = req.user!.userId;
+
+    // Vérifier si l'équipe existe et récupérer les membres
+    const team = await prisma.team.findUnique({
+      where: { id: teamId },
+      include: {
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                pseudo: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Équipe introuvable'
+      });
+    }
+
+    // Vérifier les permissions de l'utilisateur
+    const isOwner = team.ownerId === userId;
+    const currentUserMember = team.members.find(m => m.userId === userId);
+    const isCoCaptain = currentUserMember?.role === 'CO_CAPTAIN';
+
+    if (!isOwner && !isCoCaptain) {
+      return res.status(403).json({
+        success: false,
+        message: 'Seuls le propriétaire et les vice-capitaines peuvent exclure des membres'
+      });
+    }
+
+    // Ne pas permettre d'exclure le propriétaire lui-même
+    if (memberId === team.ownerId) {
+      return res.status(400).json({
+        success: false,
+        message: 'Le propriétaire ne peut pas être exclu de sa propre équipe'
+      });
+    }
+
+    // Vérifier si le membre existe dans l'équipe
+    const member = await prisma.teamMember.findUnique({
+      where: {
+        teamId_userId: {
+          teamId: teamId,
+          userId: memberId
+        }
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            pseudo: true,
+            avatar: true,
+            discordAvatar: true
+          }
+        }
+      }
+    });
+
+    if (!member) {
+      return res.status(404).json({
+        success: false,
+        message: 'Membre introuvable dans cette équipe'
+      });
+    }
+
+    // Si l'utilisateur est vice-capitaine, il ne peut exclure que les membres normaux
+    if (isCoCaptain && !isOwner) {
+      if (member.role === 'CO_CAPTAIN') {
+        return res.status(403).json({
+          success: false,
+          message: 'Un vice-capitaine ne peut pas exclure un autre vice-capitaine'
+        });
+      }
+    }
+
+    // Supprimer le membre de l'équipe
+    await prisma.teamMember.delete({
+      where: {
+        teamId_userId: {
+          teamId: teamId,
+          userId: memberId
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      message: `${member.user.pseudo} a été exclu de l'équipe avec succès`
+    });
+
+  } catch (error) {
+    console.error('Erreur exclusion membre:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur interne du serveur'
+    });
+  }
+};

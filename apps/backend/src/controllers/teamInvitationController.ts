@@ -11,7 +11,7 @@ export const invitePlayer = async (req: AuthenticatedRequest, res: Response) => 
     const { playerPseudo, message } = req.body;
     const inviterId = req.user!.userId;
 
-    // Vérifier que l'équipe existe et que l'utilisateur en est le propriétaire
+    // Vérifier que l'équipe existe et que l'utilisateur a les permissions
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       include: {
@@ -35,10 +35,15 @@ export const invitePlayer = async (req: AuthenticatedRequest, res: Response) => 
       });
     }
 
-    if (team.ownerId !== inviterId) {
+    // Vérifier les permissions : propriétaire ou vice-capitaine
+    const isOwner = team.ownerId === inviterId;
+    const currentUserMember = team.members.find(m => m.userId === inviterId);
+    const isCoCaptain = currentUserMember?.role === 'CO_CAPTAIN';
+
+    if (!isOwner && !isCoCaptain) {
       return res.status(403).json({
         success: false,
-        message: 'Vous n\'êtes pas autorisé à inviter des joueurs dans cette équipe'
+        message: 'Seuls le propriétaire et les vice-capitaines peuvent inviter des joueurs'
       });
     }
 
@@ -134,13 +139,19 @@ export const invitePlayer = async (req: AuthenticatedRequest, res: Response) => 
       });
     }
 
+    // Récupérer le pseudo de l'inviteur
+    const inviter = await prisma.user.findUnique({
+      where: { id: inviterId },
+      select: { pseudo: true }
+    });
+
     // Créer l'invitation
     const invitation = await prisma.message.create({
       data: {
         type: 'TEAM_INVITATION',
         category: 'INVITATION',
         title: `Invitation à rejoindre l'équipe ${team.name}`,
-        content: message || `${team.owner.pseudo} vous invite à rejoindre l'équipe "${team.name}" (${team.game} - ${team.gameMode})`,
+        content: message || `${inviter?.pseudo} vous invite à rejoindre l'équipe "${team.name}" (${team.game} - ${team.gameMode})`,
         senderId: inviterId,
         receiverId: playerToInvite.id,
         priority: 'HIGH',
@@ -169,7 +180,7 @@ export const invitePlayer = async (req: AuthenticatedRequest, res: Response) => 
           teamId: teamId,
           teamName: team.name,
           inviterId: inviterId,
-          inviterPseudo: team.owner.pseudo
+          inviterPseudo: inviter?.pseudo
         }
       }
     });
@@ -376,12 +387,28 @@ export const getTeamInvitations = async (req: AuthenticatedRequest, res: Respons
     const { teamId } = req.params;
     const userId = req.user!.userId;
 
-    // Vérifier que l'utilisateur est propriétaire de l'équipe
+    // Vérifier que l'utilisateur a les permissions (propriétaire ou vice-capitaine)
     const team = await prisma.team.findUnique({
-      where: { id: teamId }
+      where: { id: teamId },
+      include: {
+        members: {
+          where: { userId: userId },
+          select: { role: true }
+        }
+      }
     });
 
-    if (!team || team.ownerId !== userId) {
+    if (!team) {
+      return res.status(404).json({
+        success: false,
+        message: 'Équipe introuvable'
+      });
+    }
+
+    const isOwner = team.ownerId === userId;
+    const isCoCaptain = team.members.length > 0 && team.members[0].role === 'CO_CAPTAIN';
+
+    if (!isOwner && !isCoCaptain) {
       return res.status(403).json({
         success: false,
         message: 'Accès refusé'

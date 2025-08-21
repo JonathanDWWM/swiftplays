@@ -6,6 +6,8 @@ import {
   getTeamById,
   updateTeam,
   deleteTeam,
+  updateMemberRole,
+  kickMember,
   upload
 } from '../controllers/teamController';
 
@@ -43,5 +45,17 @@ router.put('/:id', upload.single('avatar'), updateTeam);
  * Supprimer une équipe
  */
 router.delete('/:id', deleteTeam);
+
+/**
+ * PUT /api/teams/:teamId/members/:memberId/role
+ * Mettre à jour le rôle d'un membre de l'équipe
+ */
+router.put('/:teamId/members/:memberId/role', updateMemberRole);
+
+/**
+ * DELETE /api/teams/:teamId/members/:memberId
+ * Exclure un membre de l'équipe
+ */
+router.delete('/:teamId/members/:memberId', kickMember);
 
 export default router;

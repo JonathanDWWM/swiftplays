@@ -95,6 +95,23 @@
                     <span class="data-value">{{ notification.data.teamName }}</span>
                   </div>
                 </div>
+
+                <!-- Actions spécifiques aux invitations d'équipe -->
+                <div v-if="notification.type === 'TEAM_INVITATION' && !notification.isRead && notification.actions" class="invitation-actions">
+                  <button 
+                    v-for="action in notification.actions"
+                    :key="action.id"
+                    @click.stop="handleInvitationAction(notification, action)"
+                    class="invitation-action-btn"
+                    :class="action.type"
+                    :disabled="isProcessingAction"
+                  >
+                    <FontAwesomeIcon v-if="isProcessingAction && processingActionId === `${notification.id}-${action.id}`" icon="spinner" spin />
+                    <FontAwesomeIcon v-else-if="action.id === 'accept'" icon="check" />
+                    <FontAwesomeIcon v-else-if="action.id === 'decline'" icon="times" />
+                    {{ action.label }}
+                  </button>
+                </div>
               </div>
 
               <!-- Notification Actions -->
@@ -172,6 +189,10 @@ const isMarkingRead = ref(false)
 const isLoadingMore = ref(false)
 const currentOffset = ref(0)
 const itemsPerPage = 20
+
+// État pour les actions d'invitation
+const isProcessingAction = ref(false)
+const processingActionId = ref('')
 
 // Récupération des notifications
 const { data: notificationsData, pending, error, refresh } = await useFetch('/api/notifications', {
@@ -282,6 +303,67 @@ const handleNotificationClick = async (notification: any) => {
     await navigateTo('/invitations')
   } else if (notification.data?.teamId) {
     await navigateTo(`/equipes/${notification.data.teamId}`)
+  }
+}
+
+// Gérer les actions d'invitation (Accepter/Refuser)
+const handleInvitationAction = async (notification: any, action: any) => {
+  const actionId = `${notification.id}-${action.id}`
+  
+  if (isProcessingAction.value) return
+  
+  isProcessingAction.value = true
+  processingActionId.value = actionId
+  
+  try {
+    const config = useRuntimeConfig()
+    const token = useCookie('accessToken')
+    const teamId = notification.data?.teamId
+    
+    if (!teamId) {
+      throw new Error('ID d\'équipe manquant')
+    }
+    
+    let endpoint = ''
+    let method = 'POST'
+    
+    if (action.payload?.action === 'accept_team_invitation') {
+      endpoint = `${config.public.apiBase}/api/teams/invitations/${teamId}/accept`
+    } else if (action.payload?.action === 'decline_team_invitation') {
+      endpoint = `${config.public.apiBase}/api/teams/invitations/${teamId}/decline`
+    } else {
+      throw new Error('Action inconnue')
+    }
+    
+    const response = await $fetch(endpoint, {
+      method,
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    
+    if (response.success) {
+      // Marquer la notification comme lue
+      await markAsRead(notification.id)
+      
+      // Recharger les notifications
+      await refresh()
+      
+      // Message de succès
+      const actionText = action.id === 'accept' ? 'acceptée' : 'refusée'
+      alert(`Invitation ${actionText} avec succès !`)
+      
+      // Rediriger vers l'équipe si invitation acceptée
+      if (action.id === 'accept') {
+        await navigateTo(`/equipe/${teamId}`)
+      }
+    }
+  } catch (error: any) {
+    console.error('Erreur action invitation:', error)
+    alert(error.data?.message || `Erreur lors du traitement de l'invitation`)
+  } finally {
+    isProcessingAction.value = false
+    processingActionId.value = ''
   }
 }
 
@@ -587,6 +669,60 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+}
+
+// Actions spécifiques aux invitations
+.invitation-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(59, 130, 214, 0.2);
+}
+
+.invitation-action-btn {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex: 1;
+  justify-content: center;
+
+  &.success {
+    background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #059669 0%, #047857 100%);
+      transform: translateY(-1px);
+    }
+  }
+
+  &.danger {
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    color: white;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, #DC2626 0%, #B91C1C 100%);
+      transform: translateY(-1px);
+    }
+  }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(0);
+  }
 }
 
 .mark-read-btn, .delete-notification-btn {

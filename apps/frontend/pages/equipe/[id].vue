@@ -47,7 +47,7 @@
                       :alt="team.name"
                       class="team-avatar-image"
                     />
-                    <div v-if="isOwner" class="avatar-overlay">
+                    <div v-if="canEditTeam" class="avatar-overlay">
                       <button class="change-avatar-btn" @click="$refs.avatarInput.click()">
                         <FontAwesomeIcon icon="camera" />
                         Changer
@@ -55,7 +55,7 @@
                     </div>
                   </div>
                   <input 
-                    v-if="isOwner"
+                    v-if="canEditTeam"
                     ref="avatarInput"
                     type="file" 
                     accept="image/*" 
@@ -82,16 +82,20 @@
                 </div>
               </div>
               
-              <div v-if="isOwner" class="team-actions">
-                <button @click="showEditModal = true" class="edit-team-btn">
+              <div v-if="canInviteMembers || canEditTeam || canDeleteTeam" class="team-actions">
+                <button v-if="canEditTeam" @click="showEditModal = true" class="edit-team-btn">
                   <FontAwesomeIcon icon="edit" />
                   Modifier l'équipe
                 </button>
-                <button @click="showInviteModal = true" class="invite-team-btn">
+                <button v-if="canInviteMembers" @click="showInviteModal = true" class="invite-team-btn">
                   <FontAwesomeIcon icon="user-plus" />
                   Inviter des joueurs
                 </button>
-                <button @click="showDeleteModal = true" class="delete-team-btn">
+                <button v-if="canManageMembers && totalMembers > 1" @click="showManageMembersModal = true" class="manage-members-btn">
+                  <FontAwesomeIcon icon="users-cog" />
+                  Gérer les membres
+                </button>
+                <button v-if="canDeleteTeam" @click="showDeleteModal = true" class="delete-team-btn">
                   <FontAwesomeIcon icon="trash" />
                   Supprimer
                 </button>
@@ -491,6 +495,168 @@
               </div>
             </div>
 
+            <!-- Manage Members Modal -->
+            <div v-if="showManageMembersModal" class="modal-overlay" @click="closeManageMembersModal">
+              <div class="modal-content manage-members-modal" @click.stop>
+                <div class="modal-header">
+                  <div class="modal-title-section">
+                    <FontAwesomeIcon icon="users-cog" class="modal-icon" />
+                    <div>
+                      <h3>Gestion des membres</h3>
+                      <p class="modal-subtitle">{{ team.name }} - {{ totalMembers }} membre{{ totalMembers > 1 ? 's' : '' }}</p>
+                    </div>
+                  </div>
+                  <button @click="closeManageMembersModal" class="modal-close">
+                    <FontAwesomeIcon icon="times" />
+                  </button>
+                </div>
+                
+                <div class="manage-members-content">
+                  <div class="members-management-list">
+                    <div 
+                      v-for="member in allMembers" 
+                      :key="member.id"
+                      class="member-management-card"
+                      :class="{ 'is-owner': member.isOwner }"
+                    >
+                      <div class="member-basic-info">
+                        <img 
+                          :src="member.user.avatar || member.user.discordAvatar || '/default-avatar.svg'" 
+                          :alt="member.user.pseudo"
+                          class="member-management-avatar"
+                        />
+                        <div class="member-management-info">
+                          <h4 class="member-management-name">{{ member.user.pseudo }}</h4>
+                          <span class="member-join-date">
+                            {{ member.isOwner ? 'Propriétaire depuis' : 'Rejoint le' }} {{ formatDate(member.joinedAt) }}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div class="member-role-controls">
+                        <div v-if="member.isOwner" class="owner-badge">
+                          <FontAwesomeIcon icon="crown" />
+                          <span>Propriétaire</span>
+                        </div>
+                        <div v-else class="role-management">
+                          <label class="role-label">Rôle :</label>
+                          <select 
+                            v-model="member.role" 
+                            @change="updateMemberRole(member.id, member.role)"
+                            class="role-select"
+                            :disabled="isUpdatingRole || !canModifyMemberRole(member)"
+                          >
+                            <option value="MEMBER">Membre</option>
+                            <option value="CO_CAPTAIN">Vice-capitaine</option>
+                          </select>
+                          <button 
+                            v-if="canKickMember(member)"
+                            @click="confirmKickMember(member)"
+                            class="kick-member-btn"
+                            :disabled="isKickingMember"
+                            title="Exclure ce membre"
+                          >
+                            <FontAwesomeIcon icon="user-times" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div v-if="membersError" class="error-message">
+                    <FontAwesomeIcon icon="exclamation-circle" />
+                    {{ membersError }}
+                  </div>
+
+                  <div class="members-stats">
+                    <div class="stat-item">
+                      <FontAwesomeIcon icon="users" class="stat-icon" />
+                      <span>Total : {{ totalMembers }}</span>
+                    </div>
+                    <div class="stat-item">
+                      <FontAwesomeIcon icon="user-shield" class="stat-icon" />
+                      <span>Vice-capitaines : {{ getCoCaptainsCount() }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button @click="closeManageMembersModal" class="cancel-btn">
+                    <FontAwesomeIcon icon="times" />
+                    Fermer
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Kick Member Confirmation Modal -->
+            <div v-if="memberToKick" class="modal-overlay" @click="memberToKick = null">
+              <div class="modal-content delete-modal" @click.stop>
+                <div class="modal-header">
+                  <div class="modal-title-section">
+                    <FontAwesomeIcon icon="exclamation-triangle" class="modal-icon danger" />
+                    <div>
+                      <h3>Exclure le membre</h3>
+                      <p class="modal-subtitle">Action irréversible</p>
+                    </div>
+                  </div>
+                  <button @click="memberToKick = null" class="modal-close">
+                    <FontAwesomeIcon icon="times" />
+                  </button>
+                </div>
+                
+                <div class="delete-content">
+                  <div class="member-info-kick">
+                    <img 
+                      :src="memberToKick.user.avatar || memberToKick.user.discordAvatar || '/default-avatar.svg'" 
+                      :alt="memberToKick.user.pseudo"
+                      class="member-avatar-kick"
+                    />
+                    <div class="member-details-kick">
+                      <h4 class="member-name-kick">{{ memberToKick.user.pseudo }}</h4>
+                      <span class="member-role-kick">{{ getRoleDisplayName(memberToKick.role) }}</span>
+                    </div>
+                  </div>
+                  
+                  <div class="warning-message">
+                    <p>Êtes-vous sûr de vouloir exclure ce membre de l'équipe ?</p>
+                    <div class="warning-list">
+                      <div class="warning-item">
+                        <FontAwesomeIcon icon="user-times" />
+                        <span>Le membre perdra l'accès à l'équipe</span>
+                      </div>
+                      <div class="warning-item">
+                        <FontAwesomeIcon icon="envelope" />
+                        <span>Il recevra une notification d'exclusion</span>
+                      </div>
+                      <div class="warning-item">
+                        <FontAwesomeIcon icon="undo-alt" />
+                        <span>Il pourra être ré-invité plus tard</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-actions">
+                  <button @click="memberToKick = null" class="cancel-btn">
+                    <FontAwesomeIcon icon="times" />
+                    Annuler
+                  </button>
+                  <button 
+                    @click="kickMember(memberToKick.id)" 
+                    class="delete-btn"
+                    :disabled="isKickingMember"
+                  >
+                    <FontAwesomeIcon 
+                      :icon="isKickingMember ? 'spinner' : 'user-times'" 
+                      :class="{ 'fa-spin': isKickingMember }"
+                    />
+                    {{ isKickingMember ? 'Exclusion...' : 'Exclure' }}
+                  </button>
+                </div>
+              </div>
+            </div>
+
           </template>
         </div>
       </main>
@@ -525,14 +691,21 @@ const error = ref('')
 const showEditModal = ref(false)
 const showInviteModal = ref(false)
 const showDeleteModal = ref(false)
+const showManageMembersModal = ref(false)
 
 // État des opérations
 const isUpdating = ref(false)
 const isDeleting = ref(false)
 const isInviting = ref(false)
+const isUpdatingRole = ref(false)
+const isKickingMember = ref(false)
 
 // Messages
 const successMessage = ref('')
+const membersError = ref('')
+
+// Gestion des membres
+const memberToKick = ref(null)
 
 
 // Formulaire d'édition
@@ -566,6 +739,37 @@ const isSearchingUsers = ref(false)
 // Computed properties
 const isOwner = computed(() => {
   return team.value && authStore.user && team.value.owner.id === authStore.user.id
+})
+
+const currentUserRole = computed(() => {
+  if (!team.value || !authStore.user) return null
+  
+  // Si c'est le propriétaire
+  if (team.value.owner.id === authStore.user.id) {
+    return 'CAPTAIN'
+  }
+  
+  // Chercher dans les membres
+  const member = team.value.members?.find(m => m.user.id === authStore.user.id)
+  return member?.role || null
+})
+
+const canInviteMembers = computed(() => {
+  const role = currentUserRole.value
+  return role === 'CAPTAIN' || role === 'CO_CAPTAIN'
+})
+
+const canManageMembers = computed(() => {
+  const role = currentUserRole.value
+  return role === 'CAPTAIN' || role === 'CO_CAPTAIN'
+})
+
+const canEditTeam = computed(() => {
+  return currentUserRole.value === 'CAPTAIN'
+})
+
+const canDeleteTeam = computed(() => {
+  return currentUserRole.value === 'CAPTAIN'
 })
 
 const totalMembers = computed(() => {
@@ -987,6 +1191,126 @@ const hideSuggestions = () => {
   }, 150)
 }
 
+// Gestion des membres
+const closeManageMembersModal = () => {
+  showManageMembersModal.value = false
+  membersError.value = ''
+}
+
+const getCoCaptainsCount = () => {
+  if (!team.value) return 0
+  return allMembers.value.filter(member => member.role === 'CO_CAPTAIN').length
+}
+
+const confirmKickMember = (member) => {
+  memberToKick.value = member
+}
+
+const canModifyMemberRole = (member) => {
+  const currentRole = currentUserRole.value
+  
+  // Seul le capitaine peut modifier les rôles
+  if (currentRole !== 'CAPTAIN') return false
+  
+  // Ne peut pas modifier son propre rôle ou celui du propriétaire
+  if (member.isOwner || member.user.id === authStore.user?.id) return false
+  
+  return true
+}
+
+const canKickMember = (member) => {
+  const currentRole = currentUserRole.value
+  
+  // Le capitaine peut exclure tout le monde sauf lui-même
+  if (currentRole === 'CAPTAIN') {
+    return !member.isOwner && member.user.id !== authStore.user?.id
+  }
+  
+  // Le vice-capitaine peut seulement exclure les membres normaux (pas les autres vice-capitaines ou le capitaine)
+  if (currentRole === 'CO_CAPTAIN') {
+    return !member.isOwner && member.role === 'MEMBER' && member.user.id !== authStore.user?.id
+  }
+  
+  return false
+}
+
+const updateMemberRole = async (memberId, newRole) => {
+  try {
+    isUpdatingRole.value = true
+    membersError.value = ''
+    
+    const config = useRuntimeConfig()
+    const token = useCookie('accessToken')
+    
+    const response = await $fetch(`${config.public.apiBase}/api/teams/${route.params.id}/members/${memberId}/role`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token.value}`,
+        'Content-Type': 'application/json'
+      },
+      body: {
+        role: newRole
+      }
+    })
+    
+    if (response.success) {
+      // Mettre à jour les données localement
+      const memberIndex = allMembers.value.findIndex(m => m.id === memberId)
+      if (memberIndex !== -1) {
+        allMembers.value[memberIndex].role = newRole
+      }
+      
+      successMessage.value = `Rôle mis à jour avec succès !`
+      setTimeout(() => {
+        successMessage.value = ''
+      }, 5000)
+    } else {
+      membersError.value = response.message || 'Erreur lors de la mise à jour du rôle'
+    }
+  } catch (err) {
+    console.error('Erreur updateMemberRole:', err)
+    membersError.value = err.data?.message || 'Erreur lors de la mise à jour du rôle'
+  } finally {
+    isUpdatingRole.value = false
+  }
+}
+
+const kickMember = async (memberId) => {
+  try {
+    isKickingMember.value = true
+    
+    const config = useRuntimeConfig()
+    const token = useCookie('accessToken')
+    
+    const response = await $fetch(`${config.public.apiBase}/api/teams/${route.params.id}/members/${memberId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token.value}`
+      }
+    })
+    
+    if (response.success) {
+      // Recharger les données de l'équipe pour avoir les informations à jour
+      await fetchTeam()
+      
+      memberToKick.value = null
+      successMessage.value = 'Membre exclu avec succès !'
+      
+      setTimeout(() => {
+        successMessage.value = ''
+      }, 5000)
+    } else {
+      membersError.value = response.message || 'Erreur lors de l\'exclusion'
+    }
+  } catch (err) {
+    console.error('Erreur kickMember:', err)
+    membersError.value = err.data?.message || 'Erreur lors de l\'exclusion'
+  } finally {
+    isKickingMember.value = false
+    memberToKick.value = null
+  }
+}
+
 // Lifecycle
 onMounted(() => {
   fetchTeam()
@@ -1196,6 +1520,30 @@ onMounted(() => {
 
   &:hover {
     background: linear-gradient(135deg, #218838 0%, #1ba085 100%);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+}
+
+.manage-members-btn {
+  background: linear-gradient(135deg, #8B5CF6 0%, #7C3AED 100%);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &:hover {
+    background: linear-gradient(135deg, #7C3AED 0%, #6D28D9 100%);
     transform: translateY(-1px);
   }
 
@@ -2186,6 +2534,229 @@ onMounted(() => {
   }
 }
 
+// Modale de gestion des membres
+.manage-members-modal {
+  max-width: 700px;
+  border-color: rgba(139, 92, 246, 0.3);
+
+  .manage-members-content {
+    padding: 1.5rem 2rem;
+    max-height: 70vh;
+    overflow-y: auto;
+  }
+
+  .members-management-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .member-management-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem;
+    background: rgba(31, 41, 55, 0.5);
+    border: 2px solid rgba(59, 130, 214, 0.2);
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+
+    &:hover {
+      border-color: rgba(59, 130, 214, 0.4);
+      transform: translateY(-1px);
+    }
+
+    &.is-owner {
+      border-color: rgba(255, 193, 7, 0.5);
+      background: rgba(255, 193, 7, 0.1);
+    }
+
+    .member-basic-info {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      flex: 1;
+    }
+
+    .member-management-avatar {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid rgba(59, 130, 214, 0.3);
+      flex-shrink: 0;
+    }
+
+    .member-management-info {
+      flex: 1;
+
+      .member-management-name {
+        font-size: 1.1rem;
+        font-weight: 600;
+        color: #F3F4F6;
+        margin: 0 0 0.25rem 0;
+      }
+
+      .member-join-date {
+        color: #9CA3AF;
+        font-size: 0.85rem;
+        font-style: italic;
+      }
+    }
+
+    .member-role-controls {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .owner-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: linear-gradient(135deg, #ffc107 0%, #e0a800 100%);
+      color: #1F2937;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 0.9rem;
+
+      svg {
+        color: #f59e0b;
+      }
+    }
+
+    .role-management {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+
+      .role-label {
+        color: #D1D5DB;
+        font-size: 0.9rem;
+        font-weight: 500;
+      }
+
+      .role-select {
+        padding: 0.5rem 0.75rem;
+        border: 2px solid rgba(59, 130, 214, 0.3);
+        border-radius: 8px;
+        background: rgba(31, 41, 55, 0.8);
+        color: #F3F4F6;
+        font-size: 0.9rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &:focus {
+          outline: none;
+          border-color: #3B82D6;
+          box-shadow: 0 0 0 3px rgba(59, 130, 214, 0.2);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        option {
+          background: #1F2937;
+          color: #F3F4F6;
+        }
+      }
+
+      .kick-member-btn {
+        background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+        color: white;
+        border: none;
+        padding: 0.5rem;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+
+        &:hover:not(:disabled) {
+          background: linear-gradient(135deg, #c82333 0%, #a71e2a 100%);
+          transform: scale(1.05);
+        }
+
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+          transform: none;
+        }
+      }
+    }
+  }
+
+  .members-stats {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(59, 130, 214, 0.1);
+    border-radius: 10px;
+    margin-bottom: 1rem;
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #D1D5DB;
+      font-size: 0.9rem;
+      font-weight: 500;
+
+      .stat-icon {
+        color: #3B82D6;
+        font-size: 1rem;
+      }
+    }
+  }
+}
+
+// Styles pour la modale de kick
+.member-info-kick {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem;
+  background: rgba(31, 41, 55, 0.8);
+  border: 2px solid rgba(59, 130, 214, 0.3);
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+
+  .member-avatar-kick {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(59, 130, 214, 0.5);
+    flex-shrink: 0;
+  }
+
+  .member-details-kick {
+    flex: 1;
+
+    .member-name-kick {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: #F3F4F6;
+      margin: 0 0 0.25rem 0;
+    }
+
+    .member-role-kick {
+      color: #9CA3AF;
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+  }
+}
+
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
@@ -2203,6 +2774,28 @@ onMounted(() => {
     width: 35px;
     height: 35px;
     font-size: 1rem;
+  }
+
+  .manage-members-modal {
+    .member-management-card {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 1rem;
+
+      .member-basic-info {
+        justify-content: center;
+      }
+
+      .member-role-controls {
+        justify-content: center;
+      }
+    }
+
+    .members-stats {
+      flex-direction: column;
+      gap: 0.75rem;
+      text-align: center;
+    }
   }
 }
 </style>
