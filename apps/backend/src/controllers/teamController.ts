@@ -152,6 +152,22 @@ export const createTeam = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
+    // Vérifier si l'utilisateur a déjà une équipe pour ce jeu et ce mode
+    const existingGameModeTeam = await prisma.team.findFirst({
+      where: {
+        ownerId: userId,
+        game: game as Game,
+        gameMode: gameMode
+      }
+    });
+
+    if (existingGameModeTeam) {
+      return res.status(409).json({
+        success: false,
+        message: `Vous avez déjà une équipe pour ${game} en mode ${gameMode}. Vous ne pouvez avoir qu'une seule équipe par mode de jeu.`
+      });
+    }
+
     // Générer ou valider le nom court
     let finalShortName = shortName;
     if (!finalShortName) {
@@ -280,6 +296,22 @@ export const getTeamById = async (req: AuthenticatedRequest, res: Response) => {
             avatar: true,
             discordAvatar: true
           }
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                pseudo: true,
+                avatar: true,
+                discordAvatar: true
+              }
+            }
+          },
+          orderBy: [
+            { role: 'asc' }, // CO_CAPTAIN avant MEMBER avant SUBSTITUTE
+            { joinedAt: 'asc' } // Plus anciens en premier
+          ]
         }
       }
     });

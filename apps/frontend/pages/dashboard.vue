@@ -6,52 +6,7 @@
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Top Header -->
-      <header class="top-header">
-        <div class="header-left">
-          <h1 class="page-title">Dashboard</h1>
-        </div>
-        
-        <div class="header-right">
-          <!-- Search Bar -->
-          <SearchBar />
-          
-          <!-- Message Center -->
-          <MessageCenter />
-          
-          <!-- User Menu -->
-          <div class="user-menu">
-            <button @click="toggleUserDropdown" class="user-button">
-              <img 
-                v-if="authStore.user?.avatar" 
-                :src="authStore.user.avatar" 
-                :alt="authStore.user.pseudo" 
-                class="user-avatar-image"
-              />
-              <div 
-                v-else 
-                class="user-avatar"
-              >
-                {{ authStore.user?.pseudo?.charAt(0).toUpperCase() }}
-              </div>
-              <span class="user-name">{{ authStore.user?.pseudo }}</span>
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <div v-if="showUserDropdown" class="user-dropdown">
-              <NuxtLink to="/profil" class="dropdown-item">
-                Mon Profil
-              </NuxtLink>
-              <a href="#" class="dropdown-item">
-                Paramètres
-              </a>
-              <div class="dropdown-divider"></div>
-              <button @click="handleLogout" class="dropdown-item logout-item" :disabled="authStore.isLoading">
-                {{ authStore.isLoading ? 'Déconnexion...' : 'Se déconnecter' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader title="Dashboard" />
 
       <!-- Page Content -->
       <main class="page-content">
@@ -103,13 +58,12 @@
 
 <script setup lang="ts">
 // Imports Vue
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 
 // Import du store Pinia
 import { useAuthStore } from '../stores/auth'
 import Sidebar from "~/components/Sidebar.vue";
-import SearchBar from "~/components/SearchBar.vue";
-import MessageCenter from "~/components/MessageCenter.vue";
+import AppHeader from "~/components/AppHeader.vue";
 
 // Configuration de la page
 definePageMeta({
@@ -120,28 +74,6 @@ definePageMeta({
 // Store d'authentification
 const authStore = useAuthStore()
 
-// État local pour le dropdown utilisateur
-const showUserDropdown = ref(false)
-
-// Gestion du dropdown utilisateur
-const toggleUserDropdown = () => {
-  showUserDropdown.value = !showUserDropdown.value
-}
-
-// Fermer le dropdown quand on clique ailleurs
-const closeDropdown = (event: Event) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.user-menu')) {
-    showUserDropdown.value = false
-  }
-}
-
-// Gestion de la déconnexion
-const handleLogout = async () => {
-  showUserDropdown.value = false
-  await authStore.logout()
-  window.location.href = '/'
-}
 
 onMounted(async () => {
   // Initialiser le store au cas où il ne l'est pas encore
@@ -152,13 +84,6 @@ onMounted(async () => {
     window.location.href = '/connexion'
   }
 
-  // Écouter les clics pour fermer le dropdown
-  document.addEventListener('click', closeDropdown)
-})
-
-// Nettoyage des event listeners
-onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
 })
 </script>
 

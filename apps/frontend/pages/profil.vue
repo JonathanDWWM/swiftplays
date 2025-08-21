@@ -6,49 +6,7 @@
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Top Header -->
-      <header class="top-header">
-        <div class="header-left">
-          <h1 class="page-title">Mon Profil</h1>
-        </div>
-        
-        <div class="header-right">
-          <!-- Search Bar -->
-          <SearchBar />
-          
-          <!-- User Menu -->
-          <div class="user-menu">
-            <button @click="toggleUserDropdown" class="user-button">
-              <img 
-                v-if="authStore.user?.avatar || authStore.user?.discordAvatar" 
-                :src="authStore.user.avatar || authStore.user.discordAvatar" 
-                :alt="authStore.user.pseudo" 
-                class="user-avatar-image"
-              />
-              <div 
-                v-else 
-                class="user-avatar"
-              >
-                {{ authStore.user?.pseudo?.charAt(0).toUpperCase() }}
-              </div>
-              <span class="user-name">{{ authStore.user?.pseudo }}</span>
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <div v-if="showUserDropdown" class="user-dropdown">
-              <NuxtLink to="/dashboard" class="dropdown-item">
-                Accueil
-              </NuxtLink>
-              <a href="#" class="dropdown-item">
-                Paramètres
-              </a>
-              <div class="dropdown-divider"></div>
-              <button @click="handleLogout" class="dropdown-item logout-item" :disabled="authStore.isLoading">
-                {{ authStore.isLoading ? 'Déconnexion...' : 'Se déconnecter' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader title="Mon Profil" />
 
       <!-- Page Content -->
       <main class="page-content">
@@ -256,10 +214,10 @@
 </template>
 
 <script setup lang="ts">
-import { reactive, ref, computed, onMounted, onUnmounted, watch } from 'vue'
+import { reactive, ref, computed, onMounted, watch } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import Sidebar from "~/components/Sidebar.vue"
-import SearchBar from "~/components/SearchBar.vue"
+import AppHeader from "~/components/AppHeader.vue"
 
 // Configuration de la page
 definePageMeta({
@@ -295,9 +253,6 @@ const errors = reactive({
 
 // Messages de succès
 const successMessage = ref('')
-
-// État local pour le dropdown utilisateur
-const showUserDropdown = ref(false)
 
 // Computed properties
 const accountTypeClass = computed(() => {
@@ -346,25 +301,6 @@ const isPasswordFormValid = computed(() => {
          passwordForm.confirmPassword === passwordForm.newPassword
 })
 
-// Gestion du dropdown utilisateur
-const toggleUserDropdown = () => {
-  showUserDropdown.value = !showUserDropdown.value
-}
-
-// Fermer le dropdown quand on clique ailleurs
-const closeDropdown = (event: Event) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.user-menu')) {
-    showUserDropdown.value = false
-  }
-}
-
-// Gestion de la déconnexion
-const handleLogout = async () => {
-  showUserDropdown.value = false
-  await authStore.logout()
-  window.location.href = '/'
-}
 
 // Méthodes
 const initializeForm = () => {
@@ -474,14 +410,6 @@ const handleAvatarChange = (event: Event) => {
 // Lifecycle
 onMounted(() => {
   initializeForm()
-  
-  // Écouter les clics pour fermer le dropdown
-  document.addEventListener('click', closeDropdown)
-})
-
-// Nettoyage des event listeners
-onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
 })
 
 // Watchers

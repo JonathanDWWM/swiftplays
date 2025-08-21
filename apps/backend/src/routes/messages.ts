@@ -238,8 +238,73 @@ router.post('/:id/action', authenticateToken, async (req: AuthenticatedRequest, 
       });
     }
 
-    // Traitement selon le type de message
-    // Plus de gestion d'équipes pour le moment
+    // Traitement selon le type de message et l'action
+    if (message.type === 'TEAM_INVITATION') {
+      const { action: actionType, teamId } = req.body;
+      
+      if (actionType === 'accept_team_invitation') {
+        // Accepter l'invitation
+        try {
+          // Vérifier que l'équipe existe toujours
+          const team = await prisma.team.findUnique({
+            where: { id: teamId },
+            include: { members: true }
+          });
+
+          if (!team) {
+            return res.status(404).json({
+              success: false,
+              message: 'Équipe introuvable'
+            });
+          }
+
+          // Vérifier que l'équipe n'est pas pleine
+          const currentMemberCount = team.members.length + 1; // +1 pour le propriétaire
+          if (currentMemberCount >= team.maxMembers) {
+            return res.status(400).json({
+              success: false,
+              message: 'L\'équipe est maintenant complète'
+            });
+          }
+
+          // Ajouter le membre à l'équipe
+          const newMember = await prisma.teamMember.create({
+            data: {
+              teamId: teamId,
+              userId: userId,
+              role: 'MEMBER'
+            }
+          });
+
+          // Marquer le message comme lu
+          await MessageService.markAsRead(id, userId);
+
+          return res.json({
+            success: true,
+            message: `Vous avez rejoint l'équipe ${team.name}`,
+            data: { member: newMember }
+          });
+
+        } catch (err: any) {
+          if (err.code === 'P2002') { // Violation unique constraint
+            return res.status(400).json({
+              success: false,
+              message: 'Vous faites déjà partie de cette équipe'
+            });
+          }
+          throw err;
+        }
+        
+      } else if (actionType === 'decline_team_invitation') {
+        // Refuser l'invitation
+        await MessageService.markAsRead(id, userId);
+        
+        return res.json({
+          success: true,
+          message: 'Invitation refusée'
+        });
+      }
+    }
 
     res.status(400).json({
       success: false,

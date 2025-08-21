@@ -28,6 +28,7 @@ model User {
 
   // Relations équipes
   ownedTeams      Team[]       @relation("TeamOwner")
+  teamMemberships TeamMember[]
   
   // Relations messages
   sentMessages     Message[] @relation("SentMessages")
@@ -67,7 +68,8 @@ model Team {
   
   // Relations
   ownerId     String
-  owner       User     @relation("TeamOwner", fields: [ownerId], references: [id])
+  owner       User           @relation("TeamOwner", fields: [ownerId], references: [id])
+  members     TeamMember[]
   
   // Timestamps
   createdAt   DateTime @default(now())
@@ -79,6 +81,30 @@ model Team {
 enum Game {
   FC_26               // FIFA 26 - 1v1, 2v2, 5v5
   CALL_OF_DUTY_BO7    // Call of Duty Black Ops 7 - 1v1, 2v2, 4v4
+}
+
+model TeamMember {
+  id       String          @id @default(cuid())
+  role     TeamMemberRole  @default(MEMBER)
+  
+  // Relations
+  teamId   String
+  userId   String
+  team     Team   @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Timestamps
+  joinedAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([teamId, userId]) // Un user ne peut être qu'une fois dans une équipe
+  @@map("team_members")
+}
+
+enum TeamMemberRole {
+  CAPTAIN      // Capitaine (même personne que owner)
+  CO_CAPTAIN   // Vice-capitaine
+  MEMBER       // Membre standard
 }
 
 
@@ -145,6 +171,9 @@ enum MessageType {
   SYSTEM_WELCOME
   SYSTEM_UPDATE
   SYSTEM_MAINTENANCE
+  
+  // Équipes
+  TEAM_INVITATION
   
   // Futur : Compétition
   MATCH_CHALLENGE

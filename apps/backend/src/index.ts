@@ -12,6 +12,8 @@ import authRoutes from './routes/auth';
 import discordAuthRoutes from './routes/discordAuth';
 import searchRoutes from './routes/search';
 import teamsRoutes from './routes/teams';
+import teamInvitationsRoutes from './routes/teamInvitations';
+import usersRoutes from './routes/users';
 import notificationsRoutes from './routes/notifications';
 import messagesRoutes from './routes/messages';
 
@@ -91,6 +93,10 @@ app.use('/api/search', searchRoutes);
 
 // Routes API - Équipes
 app.use('/api/teams', teamsRoutes);
+app.use('/api/teams', teamInvitationsRoutes);
+
+// Routes API - Utilisateurs
+app.use('/api/users', usersRoutes);
 
 // Routes API - Notifications
 app.use('/api/notifications', notificationsRoutes);
@@ -98,8 +104,7 @@ app.use('/api/notifications', notificationsRoutes);
 // Routes API - Messages (nouveau système unifié)
 app.use('/api/messages', messagesRoutes);
 
-// Futures routes API
-// app.use('/api/users', userRoutes);
+// Futures routes API  
 // app.use('/api/matches', matchRoutes);
 
 // Socket.io pour le temps réel

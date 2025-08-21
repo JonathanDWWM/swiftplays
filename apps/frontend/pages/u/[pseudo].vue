@@ -6,52 +6,7 @@
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Top Header -->
-      <header class="top-header">
-        <div class="header-left">
-          <h1 class="page-title">Profil de {{ userProfile?.pseudo }}</h1>
-        </div>
-        
-        <div class="header-right">
-          <!-- Search Bar -->
-          <SearchBar />
-          
-          <!-- User Menu -->
-          <div class="user-menu">
-            <button @click="toggleUserDropdown" class="user-button">
-              <img 
-                v-if="authStore.user?.avatar" 
-                :src="authStore.user.avatar" 
-                :alt="authStore.user.pseudo" 
-                class="user-avatar-image"
-              />
-              <div 
-                v-else 
-                class="user-avatar"
-              >
-                {{ authStore.user?.pseudo?.charAt(0).toUpperCase() }}
-              </div>
-              <span class="user-name">{{ authStore.user?.pseudo }}</span>
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <div v-if="showUserDropdown" class="user-dropdown">
-              <NuxtLink to="/profil" class="dropdown-item">
-                Mon Profil
-              </NuxtLink>
-              <NuxtLink to="/dashboard" class="dropdown-item">
-                Accueil
-              </NuxtLink>
-              <a href="#" class="dropdown-item">
-                Paramètres
-              </a>
-              <div class="dropdown-divider"></div>
-              <button @click="handleLogout" class="dropdown-item logout-item" :disabled="authStore.isLoading">
-                {{ authStore.isLoading ? 'Déconnexion...' : 'Se déconnecter' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader :title="`Profil de ${userProfile?.pseudo || 'Joueur'}`" />
 
       <!-- Page Content -->
       <main class="page-content">
@@ -177,7 +132,7 @@
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useAuthStore } from '../../stores/auth'
 import Sidebar from "~/components/Sidebar.vue"
-import SearchBar from "~/components/SearchBar.vue"
+import AppHeader from "~/components/AppHeader.vue"
 
 // Store
 const authStore = useAuthStore()

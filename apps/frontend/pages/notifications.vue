@@ -6,55 +6,7 @@
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Top Header -->
-      <header class="top-header">
-        <div class="header-left">
-          <h1 class="page-title">Notifications</h1>
-        </div>
-        
-        <div class="header-right">
-          <!-- Search Bar -->
-          <SearchBar />
-          
-          <!-- Message Center -->
-          <MessageCenter />
-          
-          <!-- User Menu -->
-          <div class="user-menu">
-            <button @click="toggleUserDropdown" class="user-button">
-              <img 
-                v-if="authStore.user?.avatar" 
-                :src="authStore.user.avatar" 
-                :alt="authStore.user.pseudo" 
-                class="user-avatar-image"
-              />
-              <div 
-                v-else 
-                class="user-avatar"
-              >
-                {{ authStore.user?.pseudo?.charAt(0).toUpperCase() }}
-              </div>
-              <span class="user-name">{{ authStore.user?.pseudo }}</span>
-            </button>
-            
-            <!-- Dropdown Menu -->
-            <div v-if="showUserDropdown" class="user-dropdown">
-              <NuxtLink to="/profil" class="dropdown-item">
-                Mon Profil
-              </NuxtLink>
-              <NuxtLink to="/dashboard" class="dropdown-item">
-                Accueil
-              </NuxtLink>
-              <a href="#" class="dropdown-item">
-                Paramètres
-              </a>
-              <div class="dropdown-divider"></div>
-              <button @click="handleLogout" class="dropdown-item logout-item" :disabled="authStore.isLoading">
-                {{ authStore.isLoading ? 'Déconnexion...' : 'Se déconnecter' }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
+      <AppHeader title="Notifications" />
 
       <!-- Page Content -->
       <main class="page-content">
@@ -200,11 +152,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import Sidebar from "~/components/Sidebar.vue"
-import SearchBar from "~/components/SearchBar.vue"
-import MessageCenter from "~/components/MessageCenter.vue"
+import AppHeader from "~/components/AppHeader.vue"
 
 // Store
 const authStore = useAuthStore()
@@ -216,7 +167,6 @@ definePageMeta({
 })
 
 // État local
-const showUserDropdown = ref(false)
 const showUnreadOnly = ref(false)
 const isMarkingRead = ref(false)
 const isLoadingMore = ref(false)
@@ -252,23 +202,6 @@ const displayedNotifications = computed(() => {
   return notifications.value
 })
 
-// Gestion du dropdown utilisateur
-const toggleUserDropdown = () => {
-  showUserDropdown.value = !showUserDropdown.value
-}
-
-const closeDropdown = (event: Event) => {
-  const target = event.target as HTMLElement
-  if (!target.closest('.user-menu')) {
-    showUserDropdown.value = false
-  }
-}
-
-const handleLogout = async () => {
-  showUserDropdown.value = false
-  await authStore.logout()
-  window.location.href = '/'
-}
 
 // Marquer toutes les notifications comme lues
 const markAllAsRead = async () => {
@@ -406,11 +339,6 @@ const formatDate = (dateString: string) => {
 
 // Lifecycle
 onMounted(() => {
-  document.addEventListener('click', closeDropdown)
-})
-
-onUnmounted(() => {
-  document.removeEventListener('click', closeDropdown)
 })
 </script>
 
