@@ -116,17 +116,17 @@
               <h2 class="section-title">Actions</h2>
               <div class="actions-grid">
                 <button 
-                  v-if="canInviteToTeam && !isPlayerInUserTeam"
+                  v-if="canInviteToTeam"
                   @click="showInviteModal = true" 
                   class="action-btn invite-btn"
                 >
                   <FontAwesomeIcon icon="user-plus" />
-                  Inviter dans mon équipe
+                  {{ availableTeamsForInvite.length > 1 ? 'Inviter dans une équipe' : 'Inviter dans mon équipe' }}
                 </button>
                 
-                <div v-if="isPlayerInUserTeam" class="info-message">
+                <div v-if="isPlayerInUserTeam && !canInviteToTeam" class="info-message">
                   <FontAwesomeIcon icon="users" />
-                  Ce joueur fait déjà partie de votre équipe
+                  Ce joueur fait déjà partie de toutes vos équipes
                 </div>
               </div>
             </div>
@@ -172,6 +172,29 @@
             <div v-if="successMessage" class="success-message">
               <FontAwesomeIcon icon="check-circle" />
               {{ successMessage }}
+            </div>
+
+            <!-- Sélecteur d'équipe si plusieurs équipes disponibles -->
+            <div v-if="availableTeamsForInvite.length > 1" class="form-group">
+              <label for="selectedTeam" class="form-label">
+                <FontAwesomeIcon icon="users" class="label-icon" />
+                Choisir l'équipe
+              </label>
+              <select
+                id="selectedTeam"
+                v-model="inviteForm.selectedTeamId"
+                class="form-select"
+                required
+              >
+                <option value="">Sélectionnez une équipe</option>
+                <option 
+                  v-for="team in availableTeamsForInvite"
+                  :key="team.id"
+                  :value="team.id"
+                >
+                  {{ team.name }} {{ team.shortName ? `(${team.shortName})` : '' }}
+                </option>
+              </select>
             </div>
 
             <div class="form-group">
@@ -240,7 +263,8 @@ const successMessage = ref('')
 
 // Formulaire d'invitation
 const inviteForm = reactive({
-  message: ''
+  message: '',
+  selectedTeamId: ''
 })
 
 // Erreurs d'invitation
@@ -268,25 +292,37 @@ const showTeamActions = computed(() => {
 })
 
 const canInviteToTeam = computed(() => {
-  if (!userTeams.value || userTeams.value.length === 0 || !authStore.user) return false
-  
-  // Vérifier si l'utilisateur connecté est capitaine ou vice-capitaine dans au moins une équipe
-  return userTeams.value.some(team => {
-    const userRole = team.ownerId === authStore.user?.id ? 'CAPTAIN' : 
-      team.members?.find((m: any) => m.userId === authStore.user?.id)?.role
-    return userRole === 'CAPTAIN' || userRole === 'CO_CAPTAIN'
-  })
+  return availableTeamsForInvite.value.length > 0
 })
 
 const isPlayerInUserTeam = computed(() => {
   if (!userTeams.value || userTeams.value.length === 0 || !userProfile.value) return false
   
-  // Vérifier si le joueur est dans une des équipes de l'utilisateur connecté
-  return userTeams.value.some(team => 
+  // Vérifier si le joueur est dans TOUTES les équipes de l'utilisateur connecté
+  return userTeams.value.every(team => 
     team.ownerId === userProfile.value?.id ||
     team.members?.some((m: any) => m.userId === userProfile.value?.id)
   )
 })
+
+// Équipes où l'utilisateur peut inviter (capitaine/vice-capitaine ET le joueur n'y est pas encore)
+const availableTeamsForInvite = computed(() => {
+  if (!userTeams.value || userTeams.value.length === 0 || !authStore.user || !userProfile.value) return []
+  
+  return userTeams.value.filter(team => {
+    // L'utilisateur connecté doit être capitaine ou vice-capitaine
+    const userRole = team.ownerId === authStore.user?.id ? 'CAPTAIN' : 
+      team.members?.find((m: any) => m.userId === authStore.user?.id)?.role
+    const canInvite = userRole === 'CAPTAIN' || userRole === 'CO_CAPTAIN'
+    
+    // Le joueur ne doit pas déjà être dans cette équipe
+    const playerNotInTeam = team.ownerId !== userProfile.value?.id &&
+      !team.members?.some((m: any) => m.userId === userProfile.value?.id)
+    
+    return canInvite && playerNotInTeam
+  })
+})
+
 
 // Prendre la première équipe où l'utilisateur est capitaine/vice-capitaine pour l'invitation
 const userTeam = computed(() => {
@@ -324,6 +360,7 @@ const closeInviteModal = () => {
   showInviteModal.value = false
   inviteErrors.general = ''
   inviteForm.message = ''
+  inviteForm.selectedTeamId = ''
   successMessage.value = ''
 }
 
@@ -334,12 +371,28 @@ const handleInvitePlayer = async () => {
     successMessage.value = ''
     isInviting.value = true
     
-    if (!userProfile.value || !userTeam.value) {
-      inviteErrors.general = 'Erreur lors de l\'invitation'
+    if (!userProfile.value || availableTeamsForInvite.value.length === 0) {
+      inviteErrors.general = 'Aucune équipe disponible pour l\'invitation'
       return
     }
 
-    const response = await $fetch(`/api/teams/${userTeam.value.id}/invite`, {
+    // Déterminer l'équipe cible
+    let targetTeam
+    if (availableTeamsForInvite.value.length === 1) {
+      targetTeam = availableTeamsForInvite.value[0]
+    } else {
+      if (!inviteForm.selectedTeamId) {
+        inviteErrors.general = 'Veuillez sélectionner une équipe'
+        return
+      }
+      targetTeam = availableTeamsForInvite.value.find(team => team.id === inviteForm.selectedTeamId)
+      if (!targetTeam) {
+        inviteErrors.general = 'Équipe sélectionnée invalide'
+        return
+      }
+    }
+
+    const response = await $fetch(`/api/teams/${targetTeam.id}/invite`, {
       method: 'POST',
       baseURL: useRuntimeConfig().public.apiBase,
       headers: {
@@ -848,6 +901,27 @@ if (userProfile.value) {
 
 .form-textarea::placeholder {
   color: #6B7280;
+}
+
+.form-select {
+  width: 100%;
+  padding: 0.75rem;
+  background: rgba(26, 26, 26, 0.5);
+  border: 1px solid rgba(59, 130, 214, 0.2);
+  border-radius: 8px;
+  color: #F3F4F6;
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: rgba(59, 130, 214, 0.4);
+}
+
+.form-select option {
+  background: #1a1a1a;
+  color: #F3F4F6;
 }
 
 .char-counter {

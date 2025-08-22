@@ -7,20 +7,18 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 
-// Configuration des jeux et modes
+// Configuration des jeux et modes (1v1 désactivé pour les équipes)
 const GAME_MODES = {
-  FC_26: ['1v1', '2v2', '5v5'],
-  CALL_OF_DUTY_BO7: ['1v1', '2v2', '4v4']
+  FC_26: ['2v2', '5v5'],
+  CALL_OF_DUTY_BO7: ['2v2', '4v4']
 };
 
 const GAME_MAX_MEMBERS = {
   FC_26: {
-    '1v1': 1,
     '2v2': 2,
     '5v5': 5
   },
   CALL_OF_DUTY_BO7: {
-    '1v1': 1,
     '2v2': 2,
     '4v4': 4
   }
@@ -152,19 +150,51 @@ export const createTeam = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Vérifier si l'utilisateur a déjà une équipe pour ce jeu et ce mode
+    // Vérifier si l'utilisateur a déjà une équipe pour ce jeu et ce mode (en tant que propriétaire OU membre)
     const existingGameModeTeam = await prisma.team.findFirst({
       where: {
-        ownerId: userId,
-        game: game as Game,
-        gameMode: gameMode
+        AND: [
+          { game: game as Game },
+          { gameMode: gameMode },
+          {
+            OR: [
+              { ownerId: userId }, // Utilisateur est propriétaire
+              { 
+                members: {
+                  some: {
+                    userId: userId
+                  }
+                }
+              } // Utilisateur est membre
+            ]
+          }
+        ]
+      },
+      include: {
+        owner: { select: { pseudo: true } },
+        members: {
+          where: { userId: userId },
+          select: { role: true }
+        }
       }
     });
 
     if (existingGameModeTeam) {
+      const isOwner = existingGameModeTeam.ownerId === userId;
+      const memberRole = existingGameModeTeam.members[0]?.role;
+      
+      let roleText = '';
+      if (isOwner) {
+        roleText = 'capitaine';
+      } else if (memberRole === 'CO_CAPTAIN') {
+        roleText = 'vice-capitaine';
+      } else {
+        roleText = 'membre';
+      }
+
       return res.status(409).json({
         success: false,
-        message: `Vous avez déjà une équipe pour ${game} en mode ${gameMode}. Vous ne pouvez avoir qu'une seule équipe par mode de jeu.`
+        message: `Vous faites déjà partie d'une équipe pour ${game} en mode ${gameMode} en tant que ${roleText}. Vous ne pouvez faire partie que d'une seule équipe par mode de jeu.`
       });
     }
 
@@ -261,7 +291,18 @@ export const getMyTeams = async (req: AuthenticatedRequest, res: Response) => {
           }
         ]
       },
-      include: {
+      select: {
+        id: true,
+        name: true,
+        shortName: true,
+        description: true,
+        avatar: true, // Avatar de l'équipe
+        game: true,
+        gameMode: true,
+        maxMembers: true,
+        ownerId: true,
+        createdAt: true,
+        updatedAt: true,
         owner: {
           select: {
             id: true,

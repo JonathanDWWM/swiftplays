@@ -8,7 +8,8 @@ export default defineNuxtConfig({
   modules: [
     '@pinia/nuxt',
     '@vueuse/nuxt',
-    '@nuxt/image'
+    '@nuxt/image',
+    '@nuxt/icon'
   ],
 
   imports: {

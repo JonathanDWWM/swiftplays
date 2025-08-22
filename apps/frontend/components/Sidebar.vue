@@ -18,6 +18,11 @@
             <span class="app-nav-text">Mes équipes</span>
           </NuxtLink>
         </li>
+        <li class="app-nav-item" :class="{ active: currentPath.startsWith('/ladder') }">
+          <NuxtLink to="/ladder" class="app-nav-link">
+            <span class="app-nav-text">Ladder</span>
+          </NuxtLink>
+        </li>
         <li class="app-nav-item" :class="{ active: currentPath.startsWith('/tournois') }">
           <a href="#" class="app-nav-link">
             <span class="app-nav-text">Tournois</span>

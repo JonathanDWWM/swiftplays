@@ -375,26 +375,40 @@
 
 **Phase 3 - ✅ COMPLÈTEMENT TERMINÉE :**
 1. ✅ Système d'équipes complet avec base de données
-2. ✅ Interface création/gestion/dissolution équipes
-3. ✅ Système d'invitations avec notifications
-4. ✅ Gestion des membres et permissions par rôle
-5. ✅ Pages dédiées : /equipes, /equipes/[id], /invitations
-6. ✅ Design responsive et expérience utilisateur complète
+2. ✅ Interface création/gestion/dissolution équipes  
+3. ✅ Système d'invitations avec notifications interactives
+4. ✅ Gestion des membres et permissions par rôle (Capitaine/Vice-capitaine/Membre)
+5. ✅ Pages dédiées : /equipes, /equipes/[id], /notifications
+6. ✅ Design moderne responsive et expérience utilisateur complète
+7. ✅ Validation "1 équipe par mode de jeu" stricte (propriétaire ET membre)
+8. ✅ Invitations depuis profils utilisateurs avec sélecteur d'équipe
+9. ✅ Suppression automatique notifications après traitement
+10. ✅ Messages de confirmation détaillés ("Vous avez rejoint l'équipe X!")
+11. ✅ Interface "Mes équipes" avec design moderne et avatars
 
-**À AJOUTER - Logique membres max par jeu/mode :**
-1. Système de limites de membres dynamiques selon le jeu et mode :
-   - FIFA 24 : 1v1 (2 membres max), 2v2 (3-4 membres max), 11v11 (15-20 membres max)
-   - Rocket League : 1v1 (2 membres max), 2v2 (3-4 membres max), 3v3 (4-6 membres max)
-   - Fortnite : Solo (1 membre), Duo (2 membres max), Squad (4 membres max)
-   - Valorant : 5v5 (5-7 membres max)
-   - CS2 : 5v5 (5-7 membres max)
-   - League of Legends : 5v5 (5-7 membres max)
-2. Validation côté backend selon le jeu/mode sélectionné
-3. Interface frontend adaptée avec limites dynamiques
-4. Migration des équipes existantes avec règles par défaut
+**Phase 3+ - EXTENSIONS SYSTÈME ÉQUIPES (EN COURS) :**
 
-**Phase 4 - Démarrage immédiat :**
-1. Système de matchmaking et défis
-2. Classements ELO et ranking
-3. Gestion des matches et résultats
-4. Système de litiges et modération
+**Messages & Communication :**
+- [x] Page messages basique (/messages) avec conversations
+- [ ] Interface de chat moderne avec Socket.io temps réel
+- [ ] Messages d'équipe (chat groupe par équipe)
+- [ ] Système de présence (en ligne/hors ligne)
+- [ ] Notifications push pour nouveaux messages
+
+**Logique membres max par jeu/mode (OPTIONNEL) :**
+1. [ ] Système de limites de membres dynamiques selon le jeu et mode :
+   - FC 26 : 1v1 (2 membres max), 2v2 (4 membres max), 5v5 (7-8 membres max)
+   - Call of Duty BO7 : 1v1 (2 membres max), 2v2 (4 membres max), 4v4 (6-8 membres max)
+2. [ ] Validation côté backend selon le jeu/mode sélectionné
+3. [ ] Interface frontend adaptée avec limites dynamiques
+
+**Phase 4 - PROCHAINE PHASE MAJEURE (Système Ladder) :**
+**OBJECTIF :** Ajouter la dimension compétitive avec matchmaking et classements
+1. [ ] Modèles matches + résultats en base de données
+2. [ ] API système de défis entre équipes
+3. [ ] Matchmaking basique avec contraintes (même jeu/mode)
+4. [ ] Système de classement ELO simple
+5. [ ] Interface défis et acceptation de matches
+6. [ ] Page historique des matches
+7. [ ] Tableaux de classement par jeu/mode
+8. [ ] Système de validation des résultats (screenshot + accord équipes)

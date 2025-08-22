@@ -261,12 +261,17 @@ const markAsRead = async (notificationId: string) => {
   }
 }
 
-// Supprimer une notification
+// Supprimer une notification (avec confirmation)
 const deleteNotification = async (notificationId: string) => {
   if (!confirm('Êtes-vous sûr de vouloir supprimer cette notification ?')) {
     return
   }
   
+  await deleteNotificationSilently(notificationId)
+}
+
+// Supprimer une notification (sans confirmation)
+const deleteNotificationSilently = async (notificationId: string) => {
   try {
     await $fetch(`${useRuntimeConfig().public.apiBase}/api/notifications/${notificationId}`, {
       method: 'DELETE',
@@ -344,7 +349,7 @@ const handleInvitationAction = async (notification: any, action: any) => {
     
     if (response.success) {
       // Supprimer la notification après traitement
-      await deleteNotification(notification.id)
+      await deleteNotificationSilently(notification.id)
       
       // Message de succès avec notification système
       const actionText = action.id === 'accept' ? 'acceptée' : 'refusée'

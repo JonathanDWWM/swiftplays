@@ -25,48 +25,80 @@
         :key="team.id"
         class="team-card"
       >
-        <div class="team-avatar">
-          <img 
-            v-if="team.avatar" 
-            :src="team.avatar" 
-            :alt="team.name"
-            class="team-avatar-img"
-          />
-          <div v-else class="team-avatar-placeholder">
-            {{ team.name.charAt(0).toUpperCase() }}
+        <!-- Header de la carte avec avatar et actions -->
+        <div class="team-card-header">
+          <div class="team-avatar">
+            <img 
+              v-if="team.avatar" 
+              :src="team.avatar" 
+              :alt="team.name"
+              class="team-avatar-img"
+            />
+            <div v-else class="team-avatar-placeholder">
+              <FontAwesomeIcon icon="users" />
+              <!-- Debug temporaire -->
+              <!-- {{ team.avatar ? 'HAS AVATAR' : 'NO AVATAR' }} -->
+            </div>
           </div>
-        </div>
-        
-        <div class="team-info">
-          <div class="team-header">
-            <h3 class="team-name">{{ team.name }}</h3>
-            <span v-if="team.shortName" class="team-short-name">{{ team.shortName }}</span>
-          </div>
-          <div v-if="team.game" class="team-game">
-            <span class="game-badge">{{ getGameDisplayName(team.game) }}</span>
-            <span v-if="team.gameMode" class="game-mode">{{ team.gameMode }}</span>
-          </div>
-          <p class="team-owner">
-            Créée par {{ team.owner.pseudo }}
-          </p>
-          <div class="team-date">
-            Créée le {{ formatDate(team.createdAt) }}
+          
+          <div class="team-role-badge" :class="getUserRoleInTeam(team).toLowerCase()">
+            <FontAwesomeIcon :icon="getRoleIcon(getUserRoleInTeam(team))" />
+            {{ getRoleLabel(getUserRoleInTeam(team)) }}
           </div>
         </div>
 
-        <div class="team-actions">
+        <!-- Contenu principal de la carte -->
+        <div class="team-card-content">
+          <div class="team-header">
+            <h3 class="team-name">{{ team.name }}</h3>
+            <span v-if="team.shortName" class="team-short-name">[{{ team.shortName }}]</span>
+          </div>
+          
+          <!-- Jeu et mode -->
+          <div v-if="team.game" class="team-game">
+            <div class="game-info">
+              <FontAwesomeIcon icon="gamepad" class="game-icon" />
+              <span class="game-name">{{ getGameDisplayName(team.game) }}</span>
+              <span v-if="team.gameMode" class="game-mode">{{ team.gameMode }}</span>
+            </div>
+          </div>
+
+          <!-- Stats de l'équipe -->
+          <div class="team-stats">
+            <div class="stat-item">
+              <FontAwesomeIcon icon="users" />
+              <span>{{ getTotalMembers(team) }} membre{{ getTotalMembers(team) > 1 ? 's' : '' }}</span>
+            </div>
+            <div class="stat-item">
+              <FontAwesomeIcon icon="calendar" />
+              <span>{{ formatDate(team.createdAt) }}</span>
+            </div>
+          </div>
+
+          <!-- Info créateur -->
+          <div class="team-creator">
+            <FontAwesomeIcon icon="crown" />
+            <span>Créée par {{ team.owner.pseudo }}</span>
+          </div>
+        </div>
+
+        <!-- Footer avec actions -->
+        <div class="team-card-footer">
           <NuxtLink 
             :to="`/equipe/${team.id}`" 
-            class="btn-secondary btn-small"
+            class="team-action-btn primary"
           >
+            <FontAwesomeIcon icon="eye" />
             Voir l'équipe
           </NuxtLink>
-          <NuxtLink 
-            :to="`/equipe/${team.id}`" 
-            class="btn-danger btn-small"
+          <button 
+            v-if="getUserRoleInTeam(team) === 'CAPTAIN' || getUserRoleInTeam(team) === 'CO_CAPTAIN'"
+            @click="editTeam(team)"
+            class="team-action-btn secondary"
           >
-            Gérer l'équipe
-          </NuxtLink>
+            <FontAwesomeIcon icon="cog" />
+            Gérer
+          </button>
         </div>
       </div>
     </div>
@@ -304,6 +336,63 @@ const getGameDisplayName = (game: string) => {
   return gameNames[game as keyof typeof gameNames] || game
 }
 
+// Nouvelles fonctions helper pour le design amélioré
+const getUserRoleInTeam = (team: any) => {
+  if (!authStore.user) return 'MEMBER'
+  
+  if (team.ownerId === authStore.user.id) {
+    return 'CAPTAIN'
+  }
+  
+  const membership = team.members?.find((m: any) => m.userId === authStore.user?.id)
+  return membership?.role || 'MEMBER'
+}
+
+const getRoleLabel = (role: string) => {
+  const labels = {
+    'CAPTAIN': 'Capitaine',
+    'CO_CAPTAIN': 'Vice-capitaine', 
+    'MEMBER': 'Membre'
+  }
+  return labels[role as keyof typeof labels] || 'Membre'
+}
+
+const getRoleIcon = (role: string) => {
+  const icons = {
+    'CAPTAIN': 'crown',
+    'CO_CAPTAIN': 'star',
+    'MEMBER': 'user'
+  }
+  return icons[role as keyof typeof icons] || 'user'
+}
+
+const getTotalMembers = (team: any) => {
+  return 1 + (team.members?.length || 0) // 1 pour le propriétaire + les membres
+}
+
+const navigateToTeam = (teamId: string) => {
+  navigateTo(`/equipe/${teamId}`)
+}
+
+const editTeam = (team: any) => {
+  // Ouvrir le modal d'édition
+  editingTeam.value = team
+  formData.value = {
+    name: team.name,
+    shortName: team.shortName || '',
+    game: team.game || '',
+    gameMode: team.gameMode || '',
+    avatar: null
+  }
+  
+  // Afficher l'avatar existant en prévisualisation si présent
+  if (team.avatar) {
+    avatarPreview.value = team.avatar
+  }
+  
+  showCreateModal.value = true
+}
+
 // Surveiller les changements de jeu pour réinitialiser le mode
 watch(() => formData.value.game, (newGame) => {
   if (newGame !== formData.value.game) {
@@ -469,22 +558,6 @@ const deleteTeam = async (teamId: string) => {
   }
 }
 
-// Gestion du modal
-const editTeam = (team: Team) => {
-  editingTeam.value = team
-  formData.value = {
-    name: team.name,
-    shortName: team.shortName || '',
-    game: team.game || '',
-    gameMode: team.gameMode || '',
-    avatar: null
-  }
-  
-  // Afficher l'avatar existant en prévisualisation si présent
-  if (team.avatar) {
-    avatarPreview.value = team.avatar
-  }
-}
 
 const closeModal = () => {
   showCreateModal.value = false

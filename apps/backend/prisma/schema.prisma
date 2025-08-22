@@ -37,6 +37,9 @@ model User {
   // Relations notifications (à supprimer après migration)
   notifications   Notification[]
 
+  // Relations ladder
+  ladderPlayers   LadderPlayer[]
+
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -198,5 +201,179 @@ enum Priority {
   NORMAL  
   HIGH
   URGENT
+}
+
+// ===========================
+// SYSTÈME LADDER INDIVIDUEL
+// ===========================
+
+model LadderPlayer {
+  id          String   @id @default(cuid())
+  
+  // Relations
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Statistiques par jeu et mode
+  game        Game
+  gameMode    String   // "1v1" pour les compétitions individuelles
+  
+  // Statistiques
+  victories   Int      @default(0)
+  defeats     Int      @default(0)
+  matchesPlayed Int    @default(0)
+  
+  // Position dans le classement (calculée dynamiquement)
+  rank        Int?
+  
+  // Dernière activité
+  lastMatchAt DateTime?
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  // Relations matches
+  challengesCreated   Challenge[]  @relation("ChallengeCreator")
+  challengesAccepted  Challenge[]  @relation("ChallengeAcceptor")
+  matchesAsPlayer1    Match[]      @relation("MatchPlayer1")
+  matchesAsPlayer2    Match[]      @relation("MatchPlayer2")
+  
+  @@unique([userId, game, gameMode])
+  @@map("ladder_players")
+  @@index([game, gameMode, victories, defeats])
+}
+
+model Challenge {
+  id            String          @id @default(cuid())
+  
+  // Relations
+  creatorId     String
+  acceptorId    String?
+  creator       LadderPlayer    @relation("ChallengeCreator", fields: [creatorId], references: [id], onDelete: Cascade)
+  acceptor      LadderPlayer?   @relation("ChallengeAcceptor", fields: [acceptorId], references: [id], onDelete: SetNull)
+  
+  // Informations du défi
+  game          Game
+  gameMode      String          // "1v1"
+  scheduledAt   DateTime        // Heure prévue du match
+  expiresAt     DateTime        // Heure limite d'acceptation (= scheduledAt)
+  
+  // Statuts
+  status        ChallengeStatus @default(PENDING)
+  
+  // Message optionnel
+  message       String?
+  
+  // Match associé (une fois accepté)
+  matchId       String?         @unique
+  match         Match?          @relation(fields: [matchId], references: [id])
+  
+  // Timestamps
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+  
+  @@map("challenges")
+  @@index([game, gameMode, status])
+  @@index([scheduledAt, status])
+}
+
+enum ChallengeStatus {
+  PENDING     // En attente d'acceptation
+  ACCEPTED    // Accepté, match en cours
+  EXPIRED     // Expiré (heure passée)
+  CANCELLED   // Annulé par le créateur
+  COMPLETED   // Match terminé
+}
+
+model Match {
+  id            String      @id @default(cuid())
+  
+  // Relations
+  player1Id     String
+  player2Id     String
+  player1       LadderPlayer @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2       LadderPlayer @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  
+  // Challenge d'origine
+  challenge     Challenge?
+  
+  // Informations du match
+  game          Game
+  gameMode      String      // "1v1"
+  scheduledAt   DateTime    // Heure prévue du match
+  
+  // Résultat
+  status        MatchStatus @default(IN_PROGRESS)
+  winnerId      String?     // ID du gagnant (LadderPlayer)
+  loserId       String?     // ID du perdant (LadderPlayer)
+  
+  // Score (optionnel)
+  player1Score  Int?
+  player2Score  Int?
+  
+  // Validation du résultat
+  resultSubmittedBy String?    // ID du joueur qui a soumis le résultat
+  resultSubmittedAt DateTime?  // Quand le résultat a été soumis
+  isDisputed        Boolean    @default(false)
+  
+  // Preuves (screenshots)
+  proofUrls     Json?       // URLs des screenshots de preuve
+  
+  // Timestamps
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  completedAt   DateTime?   // Quand le match a été complété
+  
+  // Relation avec les conflits
+  disputes      Dispute[]
+  
+  @@map("matches")
+  @@index([game, gameMode, status])
+  @@index([scheduledAt])
+  @@index([status, createdAt])
+}
+
+enum MatchStatus {
+  IN_PROGRESS   // Match en cours
+  COMPLETED     // Match terminé et validé
+  DISPUTED      // Résultat contesté
+  CANCELLED     // Match annulé
+}
+
+model Dispute {
+  id          String        @id @default(cuid())
+  
+  // Relations
+  matchId     String
+  match       Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  disputedBy  String        // ID du joueur qui conteste (User ID)
+  
+  // Détails du conflit
+  reason      String        // Raison du conflit
+  description String?       // Description détaillée
+  proofUrls   Json?         // URLs des preuves du joueur qui conteste
+  
+  // Statut
+  status      DisputeStatus @default(PENDING)
+  
+  // Résolution
+  resolvedBy  String?       // ID de l'admin/modérateur qui résout
+  resolution  String?       // Explication de la résolution
+  resolvedAt  DateTime?
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@map("disputes")
+  @@index([status])
+  @@index([createdAt])
+}
+
+enum DisputeStatus {
+  PENDING     // En attente de résolution
+  RESOLVED    // Résolu
+  REJECTED    // Rejeté (pas de conflit valide)
 }
 

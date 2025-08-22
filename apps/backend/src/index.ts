@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { prisma } from './lib/prisma';
+import { LadderCleanupService } from './services/ladderCleanupService';
 
 // Import des routes
 import authRoutes from './routes/auth';
@@ -16,6 +17,7 @@ import teamInvitationsRoutes from './routes/teamInvitations';
 import usersRoutes from './routes/users';
 import notificationsRoutes from './routes/notifications';
 import messagesRoutes from './routes/messages';
+import ladderRoutes from './routes/ladder';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -104,8 +106,8 @@ app.use('/api/notifications', notificationsRoutes);
 // Routes API - Messages (nouveau système unifié)
 app.use('/api/messages', messagesRoutes);
 
-// Futures routes API  
-// app.use('/api/matches', matchRoutes);
+// Routes API - Ladder (système de compétition individuelle)
+app.use('/api/ladder', ladderRoutes);
 
 // Socket.io pour le temps réel
 io.on('connection', (socket) => {
@@ -148,6 +150,12 @@ app.use((err: any, req: express.Request, res: express.Response, next: express.Ne
 process.on('SIGINT', async () => {
     console.log('🔄 Arrêt du serveur en cours...');
 
+    // Arrêter le service de nettoyage
+    if (cleanupInterval) {
+        clearInterval(cleanupInterval);
+        console.log('🧹 Service de nettoyage automatique arrêté');
+    }
+
     // Fermer les connexions Prisma
     await prisma.$disconnect();
 
@@ -157,6 +165,9 @@ process.on('SIGINT', async () => {
         process.exit(0);
     });
 });
+
+// Variable pour stocker l'intervalle de nettoyage
+let cleanupInterval: NodeJS.Timeout;
 
 // Démarrer le serveur
 server.listen(PORT, () => {
@@ -186,5 +197,16 @@ server.listen(PORT, () => {
     console.log('   GET  /api/notifications/unread-count - Get Unread Count');
     console.log('   POST /api/notifications/:id/read - Mark as Read');
     console.log('   POST /api/notifications/mark-all-read - Mark All Read');
+    console.log('   🏆 LADDER SYSTEM:');
+    console.log('   POST /api/ladder/challenges - Create Challenge');
+    console.log('   GET  /api/ladder/challenges - Get Available Challenges');
+    console.log('   POST /api/ladder/challenges/:id/accept - Accept Challenge');
+    console.log('   GET  /api/ladder/matches/my - Get My Matches');
+    console.log('   POST /api/ladder/matches/:id/result - Submit Match Result');
+    console.log('   GET  /api/ladder/ranking - Get Ladder Ranking');
+    console.log('   GET  /api/ladder/stats - Get Player Stats');
     console.log('========================================');
+    
+    // Démarrer le service de nettoyage automatique
+    cleanupInterval = LadderCleanupService.startPeriodicCleanup();
 });
