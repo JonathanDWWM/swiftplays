@@ -521,6 +521,6 @@ onMounted(async () => {
 </script>
 
 <style lang="scss" scoped>
-// Importer les styles spécifiques aux équipes
-@import '~/assets/scss/equipes';
+// Utiliser @use au lieu de @import (nouvelle syntaxe Sass)
+@use '~/assets/scss/equipes';
 </style>

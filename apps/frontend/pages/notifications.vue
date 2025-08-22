@@ -671,7 +671,7 @@ onMounted(() => {
   gap: 0.5rem;
 }
 
-// Actions spécifiques aux invitations
+/* Actions spécifiques aux invitations */
 .invitation-actions {
   display: flex;
   gap: 0.75rem;
