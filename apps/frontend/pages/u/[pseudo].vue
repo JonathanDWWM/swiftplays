@@ -248,8 +248,8 @@ const inviteErrors = reactive({
   general: ''
 })
 
-// État pour l'équipe de l'utilisateur connecté
-const { data: userTeam } = await useFetch('/api/teams/my-team', {
+// État pour les équipes de l'utilisateur connecté
+const { data: userTeams } = await useFetch('/api/teams/my', {
   baseURL: useRuntimeConfig().public.apiBase,
   headers: {
     'Authorization': `Bearer ${useCookie('accessToken').value}`
@@ -258,7 +258,7 @@ const { data: userTeam } = await useFetch('/api/teams/my-team', {
     if (response.success) {
       return response.data
     }
-    return null
+    return []
   }
 })
 
@@ -268,21 +268,35 @@ const showTeamActions = computed(() => {
 })
 
 const canInviteToTeam = computed(() => {
-  if (!userTeam.value || !authStore.user) return false
+  if (!userTeams.value || userTeams.value.length === 0 || !authStore.user) return false
   
-  // Vérifier si l'utilisateur connecté est capitaine ou vice-capitaine
-  const userRole = userTeam.value.ownerId === authStore.user.id ? 'CAPTAIN' : 
-    userTeam.value.members?.find((m: any) => m.userId === authStore.user?.id)?.role
-  
-  return userRole === 'CAPTAIN' || userRole === 'CO_CAPTAIN'
+  // Vérifier si l'utilisateur connecté est capitaine ou vice-capitaine dans au moins une équipe
+  return userTeams.value.some(team => {
+    const userRole = team.ownerId === authStore.user?.id ? 'CAPTAIN' : 
+      team.members?.find((m: any) => m.userId === authStore.user?.id)?.role
+    return userRole === 'CAPTAIN' || userRole === 'CO_CAPTAIN'
+  })
 })
 
 const isPlayerInUserTeam = computed(() => {
-  if (!userTeam.value || !userProfile.value) return false
+  if (!userTeams.value || userTeams.value.length === 0 || !userProfile.value) return false
   
-  // Vérifier si le joueur est le propriétaire ou un membre
-  return userTeam.value.ownerId === userProfile.value.id ||
-    userTeam.value.members?.some((m: any) => m.userId === userProfile.value?.id)
+  // Vérifier si le joueur est dans une des équipes de l'utilisateur connecté
+  return userTeams.value.some(team => 
+    team.ownerId === userProfile.value?.id ||
+    team.members?.some((m: any) => m.userId === userProfile.value?.id)
+  )
+})
+
+// Prendre la première équipe où l'utilisateur est capitaine/vice-capitaine pour l'invitation
+const userTeam = computed(() => {
+  if (!userTeams.value || userTeams.value.length === 0 || !authStore.user) return null
+  
+  return userTeams.value.find(team => {
+    const userRole = team.ownerId === authStore.user?.id ? 'CAPTAIN' : 
+      team.members?.find((m: any) => m.userId === authStore.user?.id)?.role
+    return userRole === 'CAPTAIN' || userRole === 'CO_CAPTAIN'
+  }) || null
 })
 
 // Gestion du dropdown utilisateur

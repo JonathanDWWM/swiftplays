@@ -343,19 +343,20 @@ const handleInvitationAction = async (notification: any, action: any) => {
     })
     
     if (response.success) {
-      // Marquer la notification comme lue
-      await markAsRead(notification.id)
+      // Supprimer la notification après traitement
+      await deleteNotification(notification.id)
       
-      // Recharger les notifications
-      await refresh()
-      
-      // Message de succès
+      // Message de succès avec notification système
       const actionText = action.id === 'accept' ? 'acceptée' : 'refusée'
-      alert(`Invitation ${actionText} avec succès !`)
+      const teamName = notification.data?.teamName || 'l\'équipe'
       
-      // Rediriger vers l'équipe si invitation acceptée
       if (action.id === 'accept') {
+        // Message spécifique pour l'acceptation
+        alert(`🎉 Vous avez rejoint l'équipe "${teamName}" !`)
         await navigateTo(`/equipe/${teamId}`)
+      } else {
+        // Message pour le refus
+        alert(`Invitation de "${teamName}" refusée`)
       }
     }
   } catch (error: any) {
