@@ -248,7 +248,18 @@ export const getMyTeams = async (req: AuthenticatedRequest, res: Response) => {
 
     const teams = await prisma.team.findMany({
       where: {
-        ownerId: userId
+        OR: [
+          {
+            ownerId: userId
+          },
+          {
+            members: {
+              some: {
+                userId: userId
+              }
+            }
+          }
+        ]
       },
       include: {
         owner: {
@@ -257,6 +268,18 @@ export const getMyTeams = async (req: AuthenticatedRequest, res: Response) => {
             pseudo: true,
             avatar: true,
             discordAvatar: true
+          }
+        },
+        members: {
+          include: {
+            user: {
+              select: {
+                id: true,
+                pseudo: true,
+                avatar: true,
+                discordAvatar: true
+              }
+            }
           }
         }
       },
@@ -552,11 +575,12 @@ export const updateMemberRole = async (req: AuthenticatedRequest, res: Response)
       });
     }
 
-    // Vérifier si l'utilisateur a les droits (propriétaire uniquement pour modifier les rôles)
-    if (team.ownerId !== userId) {
+    // Vérifier si l'utilisateur a les droits (propriétaire ou vice-capitaine)
+    const currentUserMember = team.members.find(m => m.userId === userId);
+    if (team.ownerId !== userId && (!currentUserMember || currentUserMember.role !== 'CO_CAPTAIN')) {
       return res.status(403).json({
         success: false,
-        message: 'Seul le propriétaire peut modifier les rôles des membres'
+        message: 'Seuls le propriétaire et les vice-capitaines peuvent modifier les rôles des membres'
       });
     }
 
@@ -591,6 +615,14 @@ export const updateMemberRole = async (req: AuthenticatedRequest, res: Response)
       return res.status(400).json({
         success: false,
         message: 'Impossible de modifier le rôle du propriétaire'
+      });
+    }
+
+    // Un vice-capitaine ne peut pas modifier le rôle d'un capitaine
+    if (currentUserMember?.role === 'CO_CAPTAIN' && member.role === 'CAPTAIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Un vice-capitaine ne peut pas modifier le rôle d\'un capitaine'
       });
     }
 
@@ -711,12 +743,12 @@ export const kickMember = async (req: AuthenticatedRequest, res: Response) => {
       });
     }
 
-    // Si l'utilisateur est vice-capitaine, il ne peut exclure que les membres normaux
+    // Si l'utilisateur est vice-capitaine, il ne peut pas exclure un capitaine
     if (isCoCaptain && !isOwner) {
-      if (member.role === 'CO_CAPTAIN') {
+      if (member.role === 'CAPTAIN') {
         return res.status(403).json({
           success: false,
-          message: 'Un vice-capitaine ne peut pas exclure un autre vice-capitaine'
+          message: 'Un vice-capitaine ne peut pas exclure un capitaine'
         });
       }
     }

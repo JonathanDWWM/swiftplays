@@ -89,6 +89,12 @@
         </div>
         
         <form @submit.prevent="submitTeam" class="modal-form">
+          <!-- Message d'erreur -->
+          <div v-if="errorMessage" class="error-message">
+            <FontAwesomeIcon icon="exclamation-triangle" />
+            {{ errorMessage }}
+          </div>
+          
           <div class="form-row">
             <div class="form-group">
               <label for="teamName">Nom de l'équipe *</label>
@@ -245,6 +251,7 @@ const showCreateModal = ref(false)
 const editingTeam = ref<Team | null>(null)
 const loading = ref(false)
 const pageLoading = ref(true)
+const errorMessage = ref('')
 
 const formData = ref<TeamFormData>({
   name: '',
@@ -417,7 +424,17 @@ const submitTeam = async () => {
     }
   } catch (error: any) {
     console.error('Erreur sauvegarde équipe:', error)
-    // TODO: Afficher une notification d'erreur
+    
+    // Gérer les différents types d'erreurs
+    if (error.data?.message) {
+      errorMessage.value = error.data.message
+    } else if (error.message) {
+      errorMessage.value = error.message
+    } else {
+      errorMessage.value = editingTeam.value 
+        ? 'Erreur lors de la modification de l\'équipe' 
+        : 'Erreur lors de la création de l\'équipe'
+    }
   } finally {
     loading.value = false
   }
@@ -472,6 +489,7 @@ const editTeam = (team: Team) => {
 const closeModal = () => {
   showCreateModal.value = false
   editingTeam.value = null
+  errorMessage.value = ''
   formData.value = {
     name: '',
     shortName: '',

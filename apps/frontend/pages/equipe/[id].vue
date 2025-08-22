@@ -75,9 +75,6 @@
                     <div class="team-badge game-mode-badge">
                       {{ getGameDisplayName(team.game) }} / {{ team.gameMode }}
                     </div>
-                    <div class="team-badge members-badge">
-                      Membres : 1
-                    </div>
                   </div>
                 </div>
               </div>
@@ -91,7 +88,7 @@
                   <FontAwesomeIcon icon="user-plus" />
                   Inviter des joueurs
                 </button>
-                <button v-if="canManageMembers && totalMembers > 1" @click="showManageMembersModal = true" class="manage-members-btn">
+                <button v-if="canManageMembers" @click="showManageMembersModal = true" class="manage-members-btn">
                   <FontAwesomeIcon icon="users-cog" />
                   Gérer les membres
                 </button>
@@ -1209,11 +1206,14 @@ const confirmKickMember = (member) => {
 const canModifyMemberRole = (member) => {
   const currentRole = currentUserRole.value
   
-  // Seul le capitaine peut modifier les rôles
-  if (currentRole !== 'CAPTAIN') return false
+  // Seuls le capitaine et vice-capitaine peuvent modifier les rôles
+  if (currentRole !== 'CAPTAIN' && currentRole !== 'CO_CAPTAIN') return false
   
   // Ne peut pas modifier son propre rôle ou celui du propriétaire
   if (member.isOwner || member.user.id === authStore.user?.id) return false
+  
+  // Un vice-capitaine ne peut pas modifier le rôle d'un capitaine
+  if (currentRole === 'CO_CAPTAIN' && member.role === 'CAPTAIN') return false
   
   return true
 }
@@ -1226,9 +1226,9 @@ const canKickMember = (member) => {
     return !member.isOwner && member.user.id !== authStore.user?.id
   }
   
-  // Le vice-capitaine peut seulement exclure les membres normaux (pas les autres vice-capitaines ou le capitaine)
+  // Le vice-capitaine peut exclure les membres et autres vice-capitaines, mais pas le capitaine
   if (currentRole === 'CO_CAPTAIN') {
-    return !member.isOwner && member.role === 'MEMBER' && member.user.id !== authStore.user?.id
+    return !member.isOwner && member.role !== 'CAPTAIN' && member.user.id !== authStore.user?.id
   }
   
   return false

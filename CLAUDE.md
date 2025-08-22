@@ -69,13 +69,27 @@ cd apps/backend && npx prisma studio
 ### Schéma de Base de Données
 - PostgreSQL avec Prisma ORM
 - Modèle User avec permissions basées sur les rôles (USER, MODERATOR, ADMIN)
+- Modèle Team avec système d'équipes complètement fonctionnel
+- Modèle TeamMember avec gestion des rôles (CAPTAIN, CO_CAPTAIN, MEMBER)
+- Système de messages/notifications unifié pour invitations et communications
 - Schéma défini dans `apps/backend/prisma/schema.prisma`
 
 ### Structure Frontend
-- Pages dans `apps/frontend/pages/` (connexion.vue, inscription.vue, dashboard.vue)
+- Pages principales : connexion.vue, inscription.vue, dashboard.vue, profil.vue
+- **Système d'équipes complet** :
+  - Page création d'équipes (`/equipes`) avec formulaire avancé
+  - Page détail équipe (`/equipe/[id]`) avec gestion complète des membres
+  - Gestion des permissions par rôles (Capitaine, Vice-capitaine, Membre)
+  - Système d'invitation avec autocomplétion utilisateurs
+- **Système de notifications** :
+  - Page notifications (`/notifications`) avec actions interactives
+  - Boutons Accepter/Refuser directement dans les notifications
+  - Gestion temps réel du statut des notifications
+- **Pages profil utilisateur** :
+  - Profil personnel (`/profil`) avec modification des informations
+  - Profils publics (`/u/[pseudo]`) pour visualiser d'autres utilisateurs
 - Dashboard style application avec sidebar navigation et header utilisateur
-- Styles SCSS globaux dans `apps/frontend/assets/scss/` (architecture modulaire)
-- Configurations TypeScript pour vérification stricte des types
+- Styles SCSS globaux dans `assets/scss/` (architecture modulaire)
 - Intégration client Socket.io pour fonctionnalités temps réel
 
 ### Structure Backend
