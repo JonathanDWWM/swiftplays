@@ -2,7 +2,8 @@ import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticatedRequest } from '../types/auth';
 import { CreateTeamData, UpdateTeamData } from '../types/team';
-import { Game } from '@prisma/client';
+import { Game, MessageType, MessageCategory, Priority } from '@prisma/client';
+import { notificationService } from '../services/notificationService';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
@@ -253,6 +254,33 @@ export const createTeam = async (req: AuthenticatedRequest, res: Response) => {
         }
       }
     });
+
+    // Créer notification première équipe si c'est la première équipe de l'utilisateur
+    try {
+      const userTeamCount = await prisma.team.count({
+        where: { ownerId: userId }
+      });
+      
+      if (userTeamCount === 1) { // C'est sa première équipe
+        await notificationService.createNotification(userId, {
+          type: MessageType.FIRST_TEAM_CREATED,
+          category: MessageCategory.ACHIEVEMENT,
+          title: '🏆 Première équipe créée !',
+          content: `Félicitations ! Vous venez de créer votre première équipe "${team.name}" pour ${game} ${gameMode}. Vous pouvez maintenant recruter des joueurs et participer aux défis d'équipe !`,
+          priority: Priority.HIGH,
+          data: {
+            teamId: team.id,
+            teamName: team.name,
+            game: team.game,
+            gameMode: team.gameMode,
+            achievement: 'first_team',
+            url: `/equipe/${team.id}`
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erreur notification première équipe:', error);
+    }
 
     res.status(201).json({
       success: true,

@@ -23,15 +23,32 @@
             <span class="app-nav-text">Ladder</span>
           </NuxtLink>
         </li>
-        <li class="app-nav-item" :class="{ active: currentPath.startsWith('/tournois') }">
-          <a href="#" class="app-nav-link">
+        <li class="app-nav-item" :class="{ active: currentPath.startsWith('/matches') }">
+          <NuxtLink to="/matches" class="app-nav-link">
+            <span class="app-nav-text">Mes Matches</span>
+          </NuxtLink>
+        </li>
+        <li class="app-nav-item coming-soon" title="Bientôt disponible">
+          <a href="#" class="app-nav-link disabled" @click.prevent>
             <span class="app-nav-text">Tournois</span>
+            <span class="coming-soon-badge">Bientôt</span>
           </a>
         </li>
-        <li class="app-nav-item" :class="{ active: currentPath.startsWith('/classements') }">
-          <a href="#" class="app-nav-link">
-            <span class="app-nav-text">Classements</span>
+        <li class="app-nav-item coming-soon" title="Championnats - Bientôt disponible">
+          <a href="#" class="app-nav-link disabled" @click.prevent>
+            <span class="app-nav-text">Championnats</span>
+            <span class="coming-soon-badge">Bientôt</span>
           </a>
+        </li>
+        
+        <!-- Section Admin (visible seulement pour les admins/modérateurs) -->
+        <li v-if="isAdmin" class="app-nav-section">
+          <div class="app-nav-section-title">Administration</div>
+        </li>
+        <li v-if="isAdmin" class="app-nav-item" :class="{ active: currentPath.startsWith('/admin') }">
+          <NuxtLink to="/admin" class="app-nav-link">
+            <span class="app-nav-text">Panel Admin</span>
+          </NuxtLink>
         </li>
       </ul>
     </nav>
@@ -41,12 +58,19 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuth } from '~/composables/useAuth'
 import logoImage from '~/assets/images/logo.png'
 
 const route = useRoute()
+const { user } = useAuth()
 
 // Computed pour détecter la page active
 const currentPath = computed(() => route.path)
+
+// Vérifier si l'utilisateur est admin/modérateur
+const isAdmin = computed(() => {
+  return user.value && ['ADMIN', 'MODERATOR'].includes(user.value.role)
+})
 
 // URL du logo importé depuis les assets
 const logoUrl = logoImage
@@ -132,6 +156,50 @@ const handleImageError = (event: Event) => {
 .app-nav-text {
   font-weight: 500;
   font-size: 0.95rem;
+}
+
+/* Styles pour les liens "Bientôt disponible" */
+.app-nav-item.coming-soon .app-nav-link {
+  opacity: 0.5;
+  cursor: not-allowed;
+  position: relative;
+}
+
+.app-nav-item.coming-soon .app-nav-link:hover {
+  background: none;
+  color: #9CA3AF;
+  transform: none;
+}
+
+.coming-soon-badge {
+  background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  border-radius: 12px;
+  margin-left: auto;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Styles pour les sections admin */
+.app-nav-section {
+  margin: 1.5rem 0 0.5rem 0;
+  padding: 0 1.5rem;
+}
+
+.app-nav-section-title {
+  color: #6B7280;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+}
+
+.app-nav-item:has(.app-nav-section-title) {
+  margin-bottom: 0;
 }
 
 @media (max-width: 1024px) {

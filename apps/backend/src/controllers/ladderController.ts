@@ -1,7 +1,8 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { AuthenticatedRequest } from '../types/auth';
-import { Game } from '@prisma/client';
+import { Game, MessageType, MessageCategory, Priority } from '@prisma/client';
+import { notificationService } from '../services/notificationService';
 
 /**
  * Obtenir ou créer un LadderPlayer pour un utilisateur
@@ -55,11 +56,41 @@ export const createChallenge = async (req: AuthenticatedRequest, res: Response) 
     }
 
     // Vérifier que le jeu et mode sont supportés pour le ladder
-    if (game !== 'FC_26' || gameMode !== '1v1') {
+    const supportedModes: { [key: string]: string[] } = {
+      'FC_26': ['1v1', '2v2', '5v5'],
+      'CALL_OF_DUTY_BO7': ['1v1', '2v2', '4v4']
+    };
+
+    if (!supportedModes[game] || !supportedModes[game].includes(gameMode)) {
+      const gameDisplayName = game === 'FC_26' ? 'FC 26' : 'Call of Duty Black Ops 7';
+      const modes = supportedModes[game]?.join(', ') || 'aucun mode';
       return res.status(400).json({
         success: false,
-        message: 'Seul FC 26 en mode 1v1 est actuellement supporté pour le Ladder'
+        message: `Seuls les modes ${modes} sont supportés pour ${gameDisplayName}`
       });
+    }
+
+    // Pour les modes d'équipe (2v2, 5v5), vérifier que l'utilisateur fait partie d'une équipe
+    if (gameMode !== '1v1') {
+      const userTeam = await prisma.teamMember.findFirst({
+        where: {
+          userId,
+          team: {
+            game: game as Game,
+            gameMode
+          }
+        },
+        include: {
+          team: true
+        }
+      });
+
+      if (!userTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Vous devez faire partie d'une équipe ${gameMode} pour créer un défi dans ce mode`
+        });
+      }
     }
 
     const scheduledDate = new Date(scheduledAt);
@@ -137,6 +168,52 @@ export const createChallenge = async (req: AuthenticatedRequest, res: Response) 
       }
     });
 
+    // Créer notifications pour le créateur du défi
+    try {
+      // Vérifier si c'est son premier défi
+      const userChallengeCount = await prisma.challenge.count({
+        where: {
+          creator: { userId }
+        }
+      });
+      
+      if (userChallengeCount === 1) { // C'est son premier défi
+        await notificationService.createNotification(userId, {
+          type: MessageType.FIRST_CHALLENGE_CREATED,
+          category: MessageCategory.ACHIEVEMENT,
+          title: '⚔️ Premier défi créé !',
+          content: `Bravo ! Vous venez de créer votre premier défi en ${challenge.game} ${challenge.gameMode}. Les autres joueurs peuvent maintenant l'accepter !`,
+          priority: Priority.HIGH,
+          data: {
+            challengeId: challenge.id,
+            game: challenge.game,
+            gameMode: challenge.gameMode,
+            scheduledAt: challenge.scheduledAt,
+            achievement: 'first_challenge',
+            url: '/ladder'
+          }
+        });
+      } else {
+        // Notification normale
+        await notificationService.createNotification(userId, {
+          type: MessageType.CHALLENGE_CREATED,
+          category: MessageCategory.NOTIFICATION,
+          title: 'Défi créé avec succès',
+          content: `Votre défi ${challenge.game} ${challenge.gameMode} a été publié et est maintenant visible par les autres joueurs.`,
+          priority: Priority.NORMAL,
+          data: {
+            challengeId: challenge.id,
+            game: challenge.game,
+            gameMode: challenge.gameMode,
+            scheduledAt: challenge.scheduledAt,
+            url: '/ladder'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Erreur création notification défi:', error);
+    }
+
     res.status(201).json({
       success: true,
       data: challenge,
@@ -160,6 +237,26 @@ export const getAvailableChallenges = async (req: AuthenticatedRequest, res: Res
     const { game = 'FC_26', gameMode = '1v1' } = req.query;
     const userId = req.user!.userId;
     const now = new Date();
+
+    // Pour les modes d'équipe, vérifier que l'utilisateur fait partie d'une équipe
+    if (gameMode !== '1v1') {
+      const userTeam = await prisma.teamMember.findFirst({
+        where: {
+          userId,
+          team: {
+            game: game as Game,
+            gameMode: gameMode as string
+          }
+        }
+      });
+
+      if (!userTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Vous devez faire partie d'une équipe ${gameMode} pour voir les défis dans ce mode`
+        });
+      }
+    }
 
     // Obtenir le LadderPlayer de l'utilisateur pour l'exclure des défis
     const userLadderPlayer = await prisma.ladderPlayer.findUnique({
@@ -251,6 +348,26 @@ export const acceptChallenge = async (req: AuthenticatedRequest, res: Response) 
       });
     }
 
+    // Pour les modes d'équipe, vérifier que l'utilisateur fait partie d'une équipe
+    if (challenge.gameMode !== '1v1') {
+      const userTeam = await prisma.teamMember.findFirst({
+        where: {
+          userId,
+          team: {
+            game: challenge.game,
+            gameMode: challenge.gameMode
+          }
+        }
+      });
+
+      if (!userTeam) {
+        return res.status(400).json({
+          success: false,
+          message: `Vous devez faire partie d'une équipe ${challenge.gameMode} pour accepter ce défi`
+        });
+      }
+    }
+
     // Vérifier que le défi est encore disponible
     if (challenge.status !== 'PENDING') {
       return res.status(409).json({
@@ -334,6 +451,49 @@ export const acceptChallenge = async (req: AuthenticatedRequest, res: Response) 
 
       return updatedChallenge;
     });
+
+    // Créer notifications pour les deux joueurs
+    try {
+      // Notification pour le créateur du défi (quelqu'un a accepté son défi)
+      await notificationService.createNotification(result.creator.user.id, {
+        type: MessageType.CHALLENGE_ACCEPTED,
+        category: MessageCategory.NOTIFICATION,
+        title: 'Défi accepté !',
+        content: `${result.acceptor?.user.pseudo} a accepté votre défi ${result.game} ${result.gameMode}. Le match est programmé pour ${new Date(result.scheduledAt).toLocaleString('fr-FR')}.`,
+        priority: Priority.HIGH,
+        senderId: result.acceptor?.user.id,
+        data: {
+          challengeId: result.id,
+          matchId: result.match?.id,
+          opponentPseudo: result.acceptor?.user.pseudo,
+          game: result.game,
+          gameMode: result.gameMode,
+          scheduledAt: result.scheduledAt,
+          url: '/matches'
+        }
+      });
+
+      // Notification pour l'accepteur (confirmation d'acceptation)
+      await notificationService.createNotification(userId, {
+        type: MessageType.CHALLENGE_ACCEPTED,
+        category: MessageCategory.NOTIFICATION,
+        title: 'Match confirmé',
+        content: `Vous avez accepté le défi de ${result.creator.user.pseudo} en ${result.game} ${result.gameMode}. Rendez-vous le ${new Date(result.scheduledAt).toLocaleString('fr-FR')} !`,
+        priority: Priority.HIGH,
+        senderId: result.creator.user.id,
+        data: {
+          challengeId: result.id,
+          matchId: result.match?.id,
+          opponentPseudo: result.creator.user.pseudo,
+          game: result.game,
+          gameMode: result.gameMode,
+          scheduledAt: result.scheduledAt,
+          url: '/matches'
+        }
+      });
+    } catch (error) {
+      console.error('Erreur création notifications acceptation défi:', error);
+    }
 
     res.json({
       success: true,
@@ -600,9 +760,19 @@ export const getGameStats = async (req: AuthenticatedRequest, res: Response) => 
       }
     });
 
-    // Statistiques pour COD BO7 (pour le moment vide)
-    const codBo7Players = 0;
-    const codBo7Matches = 0;
+    // Statistiques pour COD BO7
+    const codBo7Players = await prisma.ladderPlayer.count({
+      where: { 
+        game: 'CALL_OF_DUTY_BO7'
+      }
+    });
+
+    const codBo7Matches = await prisma.match.count({
+      where: { 
+        game: 'CALL_OF_DUTY_BO7',
+        status: 'IN_PROGRESS'
+      }
+    });
 
     res.json({
       success: true,
@@ -634,98 +804,101 @@ export const getSpecificGameStats = async (req: AuthenticatedRequest, res: Respo
   try {
     const { game } = req.params;
 
-    if (game === 'fc26') {
-      // Stats générales
-      const totalPlayers = await prisma.ladderPlayer.count({
+    // Déterminer le jeu en base de données selon le paramètre
+    const gameMap: { [key: string]: { db: Game, modes: string[] } } = {
+      'fc26': { db: 'FC_26', modes: ['1v1', '2v2', '5v5'] },
+      'cod-bo7': { db: 'CALL_OF_DUTY_BO7', modes: ['1v1', '2v2', '4v4'] }
+    };
+
+    const gameConfig = gameMap[game];
+    if (!gameConfig) {
+      return res.status(404).json({
+        success: false,
+        message: 'Jeu non trouvé'
+      });
+    }
+
+    // Stats générales
+    const totalPlayers = await prisma.ladderPlayer.count({
+      where: { 
+        game: gameConfig.db
+      }
+    });
+
+    const activeMatches = await prisma.match.count({
+      where: { 
+        game: gameConfig.db,
+        status: 'IN_PROGRESS'
+      }
+    });
+
+    // Stats par mode - génération dynamique
+    const modeStats: { [key: string]: { players: number, matches: number } } = {};
+    
+    for (const mode of gameConfig.modes) {
+      const players = await prisma.ladderPlayer.count({
         where: { 
-          game: 'FC_26',
-          gameMode: '1v1'
+          game: gameConfig.db,
+          gameMode: mode
         }
       });
 
-      const activeMatches = await prisma.match.count({
-        where: { 
-          game: 'FC_26',
-          gameMode: '1v1',
-          status: 'IN_PROGRESS'
-        }
-      });
-
-      // Stats par mode
-      const mode1v1Players = await prisma.ladderPlayer.count({
-        where: { 
-          game: 'FC_26',
-          gameMode: '1v1'
-        }
-      });
-
-      const mode1v1TodayMatches = await prisma.match.count({
+      const matches = await prisma.match.count({
         where: {
-          game: 'FC_26',
-          gameMode: '1v1',
+          game: gameConfig.db,
+          gameMode: mode,
           createdAt: {
             gte: new Date(new Date().setHours(0, 0, 0, 0))
           }
         }
       });
 
-      // Stats quotidiennes
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const challengesCreated = await prisma.challenge.count({
-        where: {
-          game: 'FC_26',
-          gameMode: '1v1',
-          createdAt: { gte: today }
-        }
-      });
-
-      const matchesCompleted = await prisma.match.count({
-        where: {
-          game: 'FC_26',
-          gameMode: '1v1',
-          status: 'COMPLETED',
-          updatedAt: { gte: today }
-        }
-      });
-
-      const activePlayers = await prisma.ladderPlayer.count({
-        where: {
-          game: 'FC_26',
-          gameMode: '1v1',
-          lastMatchAt: {
-            gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Dernières 24h
-          }
-        }
-      });
-
-      res.json({
-        success: true,
-        data: {
-          gameStats: {
-            totalPlayers,
-            activeMatches
-          },
-          modeStats: {
-            '1v1': {
-              players: mode1v1Players,
-              matches: mode1v1TodayMatches
-            }
-          },
-          dailyStats: {
-            challengesCreated,
-            matchesCompleted,
-            activePlayers
-          }
-        }
-      });
-    } else {
-      res.status(404).json({
-        success: false,
-        message: 'Jeu non trouvé'
-      });
+      modeStats[mode] = { players, matches };
     }
+
+    // Stats quotidiennes
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const challengesCreated = await prisma.challenge.count({
+      where: {
+        game: gameConfig.db,
+        createdAt: { gte: today }
+      }
+    });
+
+    const matchesCompleted = await prisma.match.count({
+      where: {
+        game: gameConfig.db,
+        status: 'COMPLETED',
+        updatedAt: { gte: today }
+      }
+    });
+
+    const activePlayers = await prisma.ladderPlayer.count({
+      where: {
+        game: gameConfig.db,
+        lastMatchAt: {
+          gte: new Date(Date.now() - 24 * 60 * 60 * 1000) // Dernières 24h
+        }
+      }
+    });
+
+    res.json({
+      success: true,
+      data: {
+        gameStats: {
+          totalPlayers,
+          activeMatches
+        },
+        modeStats,
+        dailyStats: {
+          challengesCreated,
+          matchesCompleted,
+          activePlayers
+        }
+      }
+    });
 
   } catch (error) {
     console.error('Erreur récupération stats jeu spécifique:', error);
@@ -781,16 +954,18 @@ export const getRecentActivity = async (req: AuthenticatedRequest, res: Response
 
     // Ajouter les matchs terminés
     recentMatches.forEach(match => {
-      if (match.winnerId) {
+      if (match.winnerId && match.player1 && match.player2) {
         const winner = match.winnerId === match.player1Id ? match.player1 : match.player2;
         const loser = match.winnerId === match.player1Id ? match.player2 : match.player1;
         
-        activities.push({
-          id: `match-${match.id}`,
-          type: 'match_completed',
-          message: `${winner.user.pseudo} a battu ${loser.user.pseudo} en ${match.game} ${match.gameMode}`,
-          createdAt: match.updatedAt
-        });
+        if (winner && loser) {
+          activities.push({
+            id: `match-${match.id}`,
+            type: 'match_completed',
+            message: `${winner.user.pseudo} a battu ${loser.user.pseudo} en ${match.game} ${match.gameMode}`,
+            createdAt: match.updatedAt
+          });
+        }
       }
     });
 

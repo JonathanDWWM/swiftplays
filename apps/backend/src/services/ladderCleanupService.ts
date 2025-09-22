@@ -51,7 +51,9 @@ export class LadderCleanupService {
           scheduledAt: {
             lte: twoHoursAgo
           },
-          resultSubmittedAt: null // Aucun résultat soumis
+          submissions: {
+            none: {} // Aucune soumission de résultats
+          }
         },
         include: {
           challenge: true

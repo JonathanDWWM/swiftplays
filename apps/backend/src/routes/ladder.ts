@@ -14,7 +14,10 @@ import {
   submitMatchResult,
   disputeMatchResult,
   getMatchDetails,
-  cancelMatch
+  cancelMatch,
+  getUserPendingMatches,
+  getUserCompletedMatches,
+  confirmMatchResult
 } from '../controllers/matchController';
 import { authenticateToken } from '../middleware/auth';
 
@@ -40,11 +43,20 @@ router.post('/challenges/:id/accept', authenticateToken, acceptChallenge);
 // Récupérer mes matchs
 router.get('/matches/my', authenticateToken, getMyMatches);
 
+// Récupérer mes matchs en attente de résultats
+router.get('/matches/pending', authenticateToken, getUserPendingMatches);
+
+// Récupérer mes matchs terminés
+router.get('/matches/completed', authenticateToken, getUserCompletedMatches);
+
 // Récupérer les détails d'un match
 router.get('/matches/:matchId', authenticateToken, getMatchDetails);
 
 // Soumettre le résultat d'un match
 router.post('/matches/:matchId/result', authenticateToken, submitMatchResult);
+
+// Confirmer un résultat soumis par l'adversaire
+router.post('/matches/:matchId/confirm', authenticateToken, confirmMatchResult);
 
 // Contester le résultat d'un match
 router.post('/matches/:matchId/dispute', authenticateToken, disputeMatchResult);

@@ -7,6 +7,11 @@ import { createServer } from 'http';
 import { Server } from 'socket.io';
 import { prisma } from './lib/prisma';
 import { LadderCleanupService } from './services/ladderCleanupService';
+import { sanctionCleanupService } from './services/sanctionCleanupService';
+import SocketService from './services/socketService';
+import ChatSocketService from './services/chatSocketService';
+import { setSocketService } from './services/notificationService';
+import { setChatSocketService } from './controllers/chatController';
 
 // Import des routes
 import authRoutes from './routes/auth';
@@ -18,6 +23,9 @@ import usersRoutes from './routes/users';
 import notificationsRoutes from './routes/notifications';
 import messagesRoutes from './routes/messages';
 import ladderRoutes from './routes/ladder';
+import uploadRoutes from './routes/upload';
+import adminRoutes from './routes/admin';
+import chatRoutes from './routes/chat';
 
 // Charger les variables d'environnement
 dotenv.config();
@@ -109,26 +117,23 @@ app.use('/api/messages', messagesRoutes);
 // Routes API - Ladder (système de compétition individuelle)
 app.use('/api/ladder', ladderRoutes);
 
-// Socket.io pour le temps réel
-io.on('connection', (socket) => {
-    console.log('🔌 Client connected:', socket.id);
+// Routes API - Upload de fichiers
+app.use('/api/upload', uploadRoutes);
 
-    // Event de test pour l'authentification temps réel
-    socket.on('authenticate', (data) => {
-        console.log('🔐 Client authentication attempt:', data);
-        // TODO: Implémenter l'auth Socket.io plus tard
-    });
+// Routes API - Administration
+app.use('/api/admin', adminRoutes);
 
-    // Rejoindre une room (équipe, match, etc.)
-    socket.on('join-room', (roomId) => {
-        socket.join(roomId);
-        console.log(`📡 Client ${socket.id} joined room: ${roomId}`);
-    });
+// Routes API - Chat temps réel
+app.use('/api/chat', chatRoutes);
 
-    socket.on('disconnect', () => {
-        console.log('🔌 Client disconnected:', socket.id);
-    });
-});
+// Initialiser les services Socket.io
+const socketService = new SocketService(io);
+const chatSocketService = new ChatSocketService(io);
+setSocketService(socketService);
+setChatSocketService(chatSocketService);
+
+// Export pour utilisation dans les contrôleurs
+export { chatSocketService };
 
 // Gestionnaire d'erreurs global
 app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -209,4 +214,7 @@ server.listen(PORT, () => {
     
     // Démarrer le service de nettoyage automatique
     cleanupInterval = LadderCleanupService.startPeriodicCleanup();
+    
+    // Démarrer le service de nettoyage des sanctions
+    sanctionCleanupService.start();
 });

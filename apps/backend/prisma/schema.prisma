@@ -36,10 +36,23 @@ model User {
   
   // Relations notifications (à supprimer après migration)
   notifications   Notification[]
+  
+  // Préférences notifications
+  notificationSettings NotificationSettings?
 
   // Relations ladder
   ladderPlayers   LadderPlayer[]
+  
+  // Relations admin
+  adminActionsPerformed AdminAction[] @relation("AdminActionPerformer")
+  adminActionsReceived  AdminAction[] @relation("AdminActionTarget")
+  sanctionsGiven       UserSanction[] @relation("SanctionGiver")
+  sanctionsReceived    UserSanction[] @relation("UserSanctions")
 
+  // Relations chat
+  chatMessages        ChatMessage[] @relation("ChatMessageSender")
+  conversationMembers ConversationMember[]
+  
   // Timestamps
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -59,6 +72,61 @@ enum AccountType {
   HYBRID   // Compte email lié à Discord
 }
 
+// Modèles pour l'administration
+model AdminAction {
+  id          String        @id @default(cuid())
+  type        AdminActionType
+  description String
+  targetUserId String?
+  targetUser   User?        @relation("AdminActionTarget", fields: [targetUserId], references: [id], onDelete: Cascade)
+  adminUserId  String
+  adminUser    User         @relation("AdminActionPerformer", fields: [adminUserId], references: [id])
+  metadata     Json?        // Données additionnelles (raison, durée, etc.)
+  createdAt    DateTime     @default(now())
+
+  @@map("admin_actions")
+  @@index([adminUserId])
+  @@index([targetUserId])
+  @@index([createdAt])
+}
+
+model UserSanction {
+  id          String         @id @default(cuid())
+  type        SanctionType
+  reason      String
+  duration    Int?           // Durée en heures (null = permanent)
+  isActive    Boolean        @default(true)
+  userId      String
+  user        User          @relation("UserSanctions", fields: [userId], references: [id], onDelete: Cascade)
+  adminUserId String
+  adminUser   User          @relation("SanctionGiver", fields: [adminUserId], references: [id])
+  expiresAt   DateTime?     // Date d'expiration (calculée)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("user_sanctions")
+  @@index([userId, isActive])
+  @@index([expiresAt])
+}
+
+enum AdminActionType {
+  USER_WARN
+  USER_BAN
+  USER_UNBAN
+  USER_KICK
+  TEAM_DISSOLVE
+  TEAM_TRANSFER_CAPTAIN
+  MATCH_RESOLVE_DISPUTE
+  CONTENT_MODERATE
+}
+
+enum SanctionType {
+  WARNING
+  TEMPORARY_BAN
+  PERMANENT_BAN
+  CHAT_MUTE
+}
+
 model Team {
   id          String   @id @default(cuid())
   name        String   @unique // Nom unique de l'équipe
@@ -73,6 +141,13 @@ model Team {
   ownerId     String
   owner       User           @relation("TeamOwner", fields: [ownerId], references: [id])
   members     TeamMember[]
+  
+  // Relations matches
+  matchesAsTeam1  Match[]    @relation("MatchTeam1")
+  matchesAsTeam2  Match[]    @relation("MatchTeam2")
+  
+  // Relations chat
+  teamConversation Conversation? @relation("TeamConversation")
   
   // Timestamps
   createdAt   DateTime @default(now())
@@ -170,30 +245,60 @@ model Message {
 }
 
 enum MessageType {
-  // Système
+  // Système & Onboarding
   SYSTEM_WELCOME
   SYSTEM_UPDATE
   SYSTEM_MAINTENANCE
+  ONBOARDING_GUIDE
+  FIRST_TEAM_CREATED
+  FIRST_CHALLENGE_CREATED
+  ACHIEVEMENT_UNLOCKED
   
   // Équipes
   TEAM_INVITATION
+  TEAM_INVITATION_ACCEPTED
+  TEAM_INVITATION_DECLINED
+  TEAM_MEMBER_JOINED
+  TEAM_MEMBER_LEFT
+  TEAM_ROLE_CHANGED
+  TEAM_DISBANDED
   
-  // Futur : Compétition
-  MATCH_CHALLENGE
-  MATCH_RESULT
-  TOURNAMENT_INVITE
+  // Défis & Matches
+  CHALLENGE_CREATED
+  CHALLENGE_RECEIVED
+  CHALLENGE_ACCEPTED
+  CHALLENGE_DECLINED
+  CHALLENGE_EXPIRED
+  MATCH_REMINDER
+  MATCH_STARTED
+  MATCH_RESULT_SUBMITTED
+  MATCH_RESULT_CONFIRMED
+  MATCH_RESULT_DISPUTED
+  MATCH_DISPUTE_RESOLVED
   
-  // Futur : Social
+  // Chat & Communication
   PRIVATE_MESSAGE
+  TEAM_CHAT_MESSAGE
+  MATCH_CHAT_MESSAGE
+  
+  // Tournois (futur)
+  TOURNAMENT_INVITE
+  TOURNAMENT_STARTED
+  TOURNAMENT_REMINDER
+  
+  // Social (futur)
+  FRIEND_REQUEST
   LOBBY_INVITE
 }
 
 enum MessageCategory {
-  NOTIFICATION    // Notifications classiques
-  INVITATION     // Nécessitent une action
-  SYSTEM         // Messages système
-  PRIVATE        // Messages privés (futur)
-  LOBBY          // Invitations lobby (futur)
+  NOTIFICATION    // Notifications classiques (informatives)
+  INVITATION     // Nécessitent une action (accepter/refuser)
+  SYSTEM         // Messages système et onboarding
+  ACHIEVEMENT    // Accomplissements et félicitations
+  REMINDER       // Rappels de matchs/événements
+  CHAT           // Messages de chat temps réel
+  ALERT          // Alertes importantes/urgentes
 }
 
 enum Priority {
@@ -289,36 +394,40 @@ enum ChallengeStatus {
 model Match {
   id            String      @id @default(cuid())
   
-  // Relations
-  player1Id     String
-  player2Id     String
-  player1       LadderPlayer @relation("MatchPlayer1", fields: [player1Id], references: [id])
-  player2       LadderPlayer @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  // Relations (flexible pour 1v1 et équipes)
+  player1Id     String?     // Pour mode 1v1
+  player2Id     String?     // Pour mode 1v1
+  team1Id       String?     // Pour mode équipe
+  team2Id       String?     // Pour mode équipe
+  
+  player1       LadderPlayer? @relation("MatchPlayer1", fields: [player1Id], references: [id])
+  player2       LadderPlayer? @relation("MatchPlayer2", fields: [player2Id], references: [id])
+  team1         Team?        @relation("MatchTeam1", fields: [team1Id], references: [id])
+  team2         Team?        @relation("MatchTeam2", fields: [team2Id], references: [id])
   
   // Challenge d'origine
   challenge     Challenge?
   
   // Informations du match
   game          Game
-  gameMode      String      // "1v1"
+  gameMode      String      // "1v1", "2v2", "4v4", "5v5"
   scheduledAt   DateTime    // Heure prévue du match
   
   // Résultat
   status        MatchStatus @default(IN_PROGRESS)
-  winnerId      String?     // ID du gagnant (LadderPlayer)
-  loserId       String?     // ID du perdant (LadderPlayer)
+  winnerId      String?     // ID du gagnant (LadderPlayer ou Team)
+  loserId       String?     // ID du perdant (LadderPlayer ou Team)
   
   // Score (optionnel)
-  player1Score  Int?
-  player2Score  Int?
+  score1        Int?        // Score équipe/joueur 1
+  score2        Int?        // Score équipe/joueur 2
+  
+  // Soumissions de résultats
+  submissions   MatchSubmission[]
   
   // Validation du résultat
-  resultSubmittedBy String?    // ID du joueur qui a soumis le résultat
-  resultSubmittedAt DateTime?  // Quand le résultat a été soumis
   isDisputed        Boolean    @default(false)
-  
-  // Preuves (screenshots)
-  proofUrls     Json?       // URLs des screenshots de preuve
+  validationDeadline DateTime? // Deadline pour confirmer (24h)
   
   // Timestamps
   createdAt     DateTime    @default(now())
@@ -332,13 +441,50 @@ model Match {
   @@index([game, gameMode, status])
   @@index([scheduledAt])
   @@index([status, createdAt])
+  @@index([validationDeadline])
 }
 
 enum MatchStatus {
   IN_PROGRESS   // Match en cours
+  AWAITING_RESULTS  // En attente de soumission de résultats
+  AWAITING_CONFIRMATION  // En attente de confirmation (24h)
   COMPLETED     // Match terminé et validé
   DISPUTED      // Résultat contesté
   CANCELLED     // Match annulé
+  AUTO_VALIDATED  // Validé automatiquement (timeout)
+}
+
+model MatchSubmission {
+  id          String        @id @default(cuid())
+  
+  // Relations
+  matchId     String
+  match       Match         @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  submittedBy String        // User ID qui a soumis
+  
+  // Résultat soumis
+  winnerId    String        // ID du gagnant déclaré (Team ou LadderPlayer)
+  score1      Int?          // Score équipe/joueur 1
+  score2      Int?          // Score équipe/joueur 2
+  
+  // Métadonnées
+  submitterRole String?     // "CAPTAIN", "CO_CAPTAIN" pour tracking
+  comments    String?       // Commentaires optionnels
+  
+  // Status
+  isValidated Boolean       @default(false)
+  
+  // Preuves (si litige)
+  evidenceUrls Json?        // URLs des fichiers de preuve
+  
+  // Timestamps
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  
+  @@unique([matchId, submittedBy]) // Un utilisateur ne peut soumettre qu'une fois par match
+  @@map("match_submissions")
+  @@index([matchId])
+  @@index([submittedBy])
 }
 
 model Dispute {
@@ -375,5 +521,177 @@ enum DisputeStatus {
   PENDING     // En attente de résolution
   RESOLVED    // Résolu
   REJECTED    // Rejeté (pas de conflit valide)
+}
+
+// ===========================
+// PRÉFÉRENCES NOTIFICATIONS
+// ===========================
+
+model NotificationSettings {
+  id       String @id @default(cuid())
+  
+  // Relation
+  userId   String @unique
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Paramètres généraux
+  enableWebNotifications    Boolean @default(true)   // Notifications web/site
+  enableEmailNotifications Boolean @default(true)   // Emails
+  enablePushNotifications  Boolean @default(false)  // Push mobile (futur)
+  
+  // Équipes
+  teamInvitations          Boolean @default(true)   // Invitations d'équipe
+  teamUpdates             Boolean @default(true)   // Mises à jour équipe
+  teamChat                Boolean @default(true)   // Messages équipe
+  
+  // Défis et matchs
+  challengeReceived       Boolean @default(true)   // Défis reçus
+  challengeAccepted       Boolean @default(true)   // Défi accepté
+  matchReminders          Boolean @default(true)   // Rappels de match
+  matchResults            Boolean @default(true)   // Résultats de match
+  matchDisputes           Boolean @default(true)   // Litiges
+  
+  // Onboarding et système
+  systemMessages          Boolean @default(true)   // Messages système
+  achievements            Boolean @default(true)   // Accomplissements
+  onboardingGuides        Boolean @default(true)   // Guides d'aide
+  
+  // Chat et social
+  privateMessages         Boolean @default(true)   // Messages privés
+  socialUpdates           Boolean @default(false)  // Mises à jour sociales
+  friendRequests          Boolean @default(true)   // Demandes d'amis
+  
+  // Heures de tranquillité (Do Not Disturb)
+  quietHoursEnabled       Boolean @default(false)
+  quietHoursStart         String? // Format HH:MM
+  quietHoursEnd           String? // Format HH:MM
+  quietHoursTimezone      String @default("Europe/Paris")
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("notification_settings")
+  @@index([userId])
+}
+
+// ===========================
+// SYSTÈME DE CHAT TEMPS RÉEL
+// ===========================
+
+model Conversation {
+  id          String             @id @default(cuid())
+  type        ConversationType
+  title       String?            // Titre pour groupes/équipes
+  description String?            // Description optionnelle
+  
+  // Relations
+  teamId      String?            @unique // Pour chat équipe
+  team        Team?              @relation("TeamConversation", fields: [teamId], references: [id], onDelete: Cascade)
+  matchId     String?            // Pour chat pré-match (futur)
+  
+  // Métadonnées
+  isActive    Boolean            @default(true)
+  lastActivity DateTime?         // Dernière activité
+  
+  // Relations
+  members     ConversationMember[]
+  messages    ChatMessage[]
+  
+  // Timestamps
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+  
+  @@map("conversations")
+  @@index([type])
+  @@index([teamId])
+  @@index([lastActivity])
+}
+
+model ConversationMember {
+  id             String       @id @default(cuid())
+  
+  // Relations
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Statut
+  role           ChatRole     @default(MEMBER)
+  isActive       Boolean      @default(true)
+  lastReadAt     DateTime?    // Dernière lecture pour notifications non-lues
+  
+  // Métadonnées
+  joinedAt       DateTime     @default(now())
+  mutedUntil     DateTime?    // Mute temporaire
+  
+  @@map("conversation_members")
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId, isActive])
+}
+
+model ChatMessage {
+  id             String       @id @default(cuid())
+  content        String
+  type           ChatMessageType @default(TEXT)
+  
+  // Relations
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  senderId       String
+  sender         User         @relation("ChatMessageSender", fields: [senderId], references: [id])
+  
+  // Métadonnées
+  isEdited       Boolean      @default(false)
+  editedAt       DateTime?
+  isDeleted      Boolean      @default(false)
+  deletedAt      DateTime?
+  
+  // Réactions (futur)
+  reactions      Json?        // Emoji reactions { "👍": ["userId1", "userId2"], ... }
+  
+  // Réponse à un message (futur)
+  replyToId      String?
+  replyTo        ChatMessage? @relation("MessageReplies", fields: [replyToId], references: [id])
+  replies        ChatMessage[] @relation("MessageReplies")
+  
+  // Modération
+  isFlagged      Boolean      @default(false)
+  flaggedReason  String?
+  moderatedBy    String?
+  moderatedAt    DateTime?
+  
+  // Timestamps
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+  
+  @@map("chat_messages")
+  @@index([conversationId, createdAt])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+enum ConversationType {
+  DIRECT      // Message privé 1v1
+  TEAM        // Chat équipe
+  MATCH       // Chat pré/post match entre équipes
+  GROUP       // Groupe personnalisé (futur)
+  SUPPORT     // Support/aide (futur)
+}
+
+enum ChatRole {
+  MEMBER      // Membre standard
+  MODERATOR   // Modérateur de conversation
+  ADMIN       // Admin de conversation
+}
+
+enum ChatMessageType {
+  TEXT        // Message texte standard
+  SYSTEM      // Message système (x a rejoint, x a quitté)
+  FILE        // Fichier partagé (futur)
+  IMAGE       // Image partagée (futur)
+  MATCH_UPDATE // Mise à jour de match (score, etc)
 }
 

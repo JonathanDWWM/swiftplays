@@ -4,6 +4,8 @@ import { hashPassword, comparePassword } from '../utils/password';
 import { generateTokenPair, verifyRefreshToken, generateAccessToken } from '../utils/jwt';
 import { RegisterRequest, LoginRequest, AuthResponse, AuthenticatedRequest, ErrorResponse } from '../types/auth';
 import { emailService } from '../services/emailService';
+import { notificationService } from '../services/notificationService';
+import { MessageType, MessageCategory, Priority } from '@prisma/client';
 import { prisma } from '../lib/prisma';
 
 /**
@@ -45,6 +47,11 @@ export const register = async (req: Request, res: Response): Promise<void> => {
             firstName: user.firstName || undefined
         }).catch(error => {
             console.error('Erreur envoi email de bienvenue:', error);
+        });
+
+        // Créer les notifications d'onboarding (sans bloquer la réponse)
+        createOnboardingNotifications(user.id, user.pseudo).catch(error => {
+            console.error('Erreur création notifications onboarding:', error);
         });
 
         const response: AuthResponse = {
@@ -536,3 +543,110 @@ export const changePassword = async (req: AuthenticatedRequest, res: Response): 
         res.status(500).json(errorResponse);
     }
 };
+
+/**
+ * Créer les notifications d'onboarding pour un nouvel utilisateur
+ */
+async function createOnboardingNotifications(userId: string, pseudo: string): Promise<void> {
+    try {
+        // Délai d'attente pour laisser le temps à l'utilisateur de se connecter
+        await new Promise(resolve => setTimeout(resolve, 2000));
+
+        // Notification de bienvenue immédiate
+        await notificationService.createNotification(userId, {
+            type: MessageType.SYSTEM_WELCOME,
+            category: MessageCategory.SYSTEM,
+            title: `🎮 Bienvenue sur SwiftPlays, ${pseudo} !`,
+            content: `Félicitations ! Votre compte a été créé avec succès. Prêt à relever vos premiers défis ?`,
+            priority: Priority.HIGH,
+            data: {
+                step: 'welcome',
+                url: '/dashboard'
+            }
+        });
+
+        // Guide d'onboarding - étape 1: comprendre la plateforme
+        setTimeout(async () => {
+            try {
+                await notificationService.createNotification(userId, {
+                    type: MessageType.ONBOARDING_GUIDE,
+                    category: MessageCategory.NOTIFICATION,
+                    title: '📚 Guide SwiftPlays - Étape 1',
+                    content: `Découvrez comment fonctionne SwiftPlays : créez des défis, affrontez d'autres joueurs et grimpez dans le classement !`,
+                    priority: Priority.NORMAL,
+                    data: {
+                        step: 'platform_intro',
+                        url: '/ladder',
+                        actions: ['explore_challenges']
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur notification onboarding étape 1:', error);
+            }
+        }, 10000); // 10 secondes après
+
+        // Guide d'onboarding - étape 2: créer une équipe
+        setTimeout(async () => {
+            try {
+                await notificationService.createNotification(userId, {
+                    type: MessageType.ONBOARDING_GUIDE,
+                    category: MessageCategory.NOTIFICATION,
+                    title: '👥 Guide SwiftPlays - Étape 2',
+                    content: `Pour participer aux modes 2v2 et 5v5, créez votre équipe ou rejoignez-en une ! Les défis 1v1 sont disponibles immédiatement.`,
+                    priority: Priority.NORMAL,
+                    data: {
+                        step: 'team_creation',
+                        url: '/equipes',
+                        actions: ['create_team', 'browse_teams']
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur notification onboarding étape 2:', error);
+            }
+        }, 30000); // 30 secondes après
+
+        // Guide d'onboarding - étape 3: premier défi
+        setTimeout(async () => {
+            try {
+                await notificationService.createNotification(userId, {
+                    type: MessageType.ONBOARDING_GUIDE,
+                    category: MessageCategory.NOTIFICATION,
+                    title: '⚔️ Guide SwiftPlays - Étape 3',
+                    content: `Prêt pour l'action ? Créez votre premier défi 1v1 ou acceptez-en un existant pour commencer à jouer !`,
+                    priority: Priority.NORMAL,
+                    expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Expire dans 7 jours
+                    data: {
+                        step: 'first_challenge',
+                        url: '/ladder',
+                        actions: ['create_challenge', 'accept_challenge']
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur notification onboarding étape 3:', error);
+            }
+        }, 60000); // 1 minute après
+
+        // Rappel de personnalisation du profil
+        setTimeout(async () => {
+            try {
+                await notificationService.createNotification(userId, {
+                    type: MessageType.ONBOARDING_GUIDE,
+                    category: MessageCategory.REMINDER,
+                    title: '⚙️ Personnalisez votre profil',
+                    content: `N'oubliez pas de personnaliser votre profil : avatar, informations, préférences de notifications...`,
+                    priority: Priority.LOW,
+                    expiresAt: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // Expire dans 3 jours
+                    data: {
+                        step: 'profile_setup',
+                        url: '/profil'
+                    }
+                });
+            } catch (error) {
+                console.error('Erreur notification profil:', error);
+            }
+        }, 120000); // 2 minutes après
+
+    } catch (error) {
+        console.error('Erreur création notifications onboarding:', error);
+    }
+}

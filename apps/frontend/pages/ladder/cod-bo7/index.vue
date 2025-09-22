@@ -1,12 +1,12 @@
 <template>
-  <div class="fc26-modes-page">
+  <div class="cod-bo7-modes-page">
     <!-- Sidebar Navigation -->
     <Sidebar />
 
     <!-- Main Content Area -->
     <div class="main-content">
       <!-- Top Header -->
-      <AppHeader title="FC 26 - Modes Ladder" />
+      <AppHeader title="Call of Duty BO7 - Modes Ladder" />
 
       <!-- Page Content -->
       <main class="page-content">
@@ -20,12 +20,12 @@
             
             <div class="game-info">
               <div class="game-cover">
-                <img src="/fifa25-cover.png" alt="FC26" class="cover-image">
+                <img src="/cod-bo7-cover.png" alt="COD BO7" class="cover-image">
               </div>
               
               <div class="game-details">
-                <h1 class="game-title">FC 26</h1>
-                <p class="game-subtitle">Modes disponibles</p>
+                <h1 class="game-title">Call of Duty Black Ops 7</h1>
+                <p class="game-subtitle">Modes de compétition disponibles</p>
                 
                 <div class="game-stats">
                   <div class="stat">
@@ -57,16 +57,16 @@
                 <div class="mode-content">
                   <h3 class="mode-title">1v1</h3>
                   <p class="mode-description">
-                    Affrontez d'autres joueurs en duel individuel et grimpez dans le classement
+                    Affrontez d'autres joueurs en duel individuel sur les meilleures cartes
                   </p>
                   
                   <div class="mode-stats">
                     <div class="mode-stat">
-                      <span class="stat-value">{{ modeStats['1v1'].players }}</span>
+                      <span class="stat-value">{{ modeStats['1v1']?.players || 0 }}</span>
                       <span class="stat-name">Joueurs</span>
                     </div>
                     <div class="mode-stat">
-                      <span class="stat-value">{{ modeStats['1v1'].matches }}</span>
+                      <span class="stat-value">{{ modeStats['1v1']?.matches || 0 }}</span>
                       <span class="stat-name">Matchs aujourd'hui</span>
                     </div>
                   </div>
@@ -92,7 +92,7 @@
                 <div class="mode-content">
                   <h3 class="mode-title">2v2</h3>
                   <p class="mode-description">
-                    Formez une équipe de 2 joueurs et affrontez d'autres duos
+                    Formez un duo et dominez les cartes en mode coopératif
                   </p>
                   
                   <div class="mode-stats">
@@ -116,27 +116,27 @@
                 </div>
               </div>
 
-              <!-- 5v5 Équipes Mode -->
-              <div class="mode-card available" @click="navigateToMode('5v5')">
+              <!-- 4v4 Équipes Mode -->
+              <div class="mode-card available" @click="navigateToMode('4v4')">
                 <div class="mode-icon">
-                  <Icon name="mdi:account-group" />
+                  <Icon name="mdi:account-multiple" />
                   <span class="vs-text">VS</span>
-                  <Icon name="mdi:account-group" />
+                  <Icon name="mdi:account-multiple" />
                 </div>
                 
                 <div class="mode-content">
-                  <h3 class="mode-title">5v5</h3>
+                  <h3 class="mode-title">4v4</h3>
                   <p class="mode-description">
-                    Formez une équipe de 5 joueurs et affrontez d'autres équipes
+                    Formez une escouade complète et affrontez d'autres équipes tactiques
                   </p>
                   
                   <div class="mode-stats">
                     <div class="mode-stat">
-                      <span class="stat-value">{{ modeStats['5v5']?.players || 0 }}</span>
-                      <span class="stat-name">Équipes</span>
+                      <span class="stat-value">{{ modeStats['4v4']?.players || 0 }}</span>
+                      <span class="stat-name">Escouades</span>
                     </div>
                     <div class="mode-stat">
-                      <span class="stat-value">{{ modeStats['5v5']?.matches || 0 }}</span>
+                      <span class="stat-value">{{ modeStats['4v4']?.matches || 0 }}</span>
                       <span class="stat-name">Matchs aujourd'hui</span>
                     </div>
                   </div>
@@ -220,7 +220,7 @@ const modeStats = ref({
     players: 0,
     matches: 0
   },
-  '5v5': {
+  '4v4': {
     players: 0,
     matches: 0
   }
@@ -235,17 +235,17 @@ const dailyStats = ref({
 // Méthodes
 const navigateToMode = (mode) => {
   if (mode === '1v1') {
-    navigateTo('/ladder/fc26/1v1')
+    navigateTo('/ladder/cod-bo7/1v1')
   } else if (mode === '2v2') {
-    navigateTo('/ladder/fc26/2v2')
-  } else if (mode === '5v5') {
-    navigateTo('/ladder/fc26/5v5')
+    navigateTo('/ladder/cod-bo7/2v2')
+  } else if (mode === '4v4') {
+    navigateTo('/ladder/cod-bo7/4v4')
   }
 }
 
 const loadGameStats = async () => {
   try {
-    const response = await $fetch('/api/ladder/stats/fc26', {
+    const response = await $fetch('/api/ladder/stats/cod-bo7', {
       headers: {
         Authorization: `Bearer ${useAuth().token.value}`
       }
@@ -256,10 +256,14 @@ const loadGameStats = async () => {
       dailyStats.value = response.data.dailyStats
     }
   } catch (error) {
-    console.error('Erreur chargement stats FC26:', error)
+    console.error('Erreur chargement stats COD BO7:', error)
     // Valeurs par défaut en cas d'erreur - vraies stats (zéro pour un site neuf)
     gameStats.value = { totalPlayers: 0, activeMatches: 0 }
-    modeStats.value = { '1v1': { players: 0, matches: 0 }, '2v2': { players: 0, matches: 0 }, '5v5': { players: 0, matches: 0 } }
+    modeStats.value = { 
+      '1v1': { players: 0, matches: 0 },
+      '2v2': { players: 0, matches: 0 },
+      '4v4': { players: 0, matches: 0 }
+    }
     dailyStats.value = { challengesCreated: 0, matchesCompleted: 0, activePlayers: 0 }
   }
 }
@@ -271,7 +275,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.fc26-modes-page {
+.cod-bo7-modes-page {
   display: flex;
   min-height: 100vh;
   background: #0f0f0f;
@@ -304,17 +308,17 @@ onMounted(() => {
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: rgba(59, 130, 214, 0.1);
-  border: 1px solid rgba(59, 130, 214, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 8px;
-  color: #3B82D6;
+  color: #EF4444;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-bottom: 2rem;
 }
 
 .back-button:hover {
-  background: rgba(59, 130, 214, 0.2);
+  background: rgba(239, 68, 68, 0.2);
 }
 
 .game-info {
@@ -324,7 +328,7 @@ onMounted(() => {
   padding: 2rem;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 20px;
-  border: 2px solid rgba(59, 130, 214, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.1);
 }
 
 .game-cover {
@@ -372,7 +376,7 @@ onMounted(() => {
 .stat-number {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #3B82D6;
+  color: #EF4444;
 }
 
 .stat-label {
@@ -403,7 +407,7 @@ onMounted(() => {
   padding: 2rem;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 15px;
-  border: 2px solid rgba(59, 130, 214, 0.1);
+  border: 2px solid rgba(239, 68, 68, 0.1);
   transition: all 0.3s ease;
 }
 
@@ -412,13 +416,9 @@ onMounted(() => {
 }
 
 .mode-card.available:hover {
-  border-color: #3B82D6;
+  border-color: #EF4444;
   transform: translateY(-5px);
-  box-shadow: 0 10px 30px rgba(59, 130, 214, 0.2);
-}
-
-.mode-card.coming-soon {
-  opacity: 0.6;
+  box-shadow: 0 10px 30px rgba(239, 68, 68, 0.2);
 }
 
 .mode-icon {
@@ -426,7 +426,7 @@ onMounted(() => {
   align-items: center;
   gap: 1rem;
   font-size: 2rem;
-  color: #3B82D6;
+  color: #EF4444;
   flex-shrink: 0;
 }
 
@@ -468,7 +468,7 @@ onMounted(() => {
 .stat-value {
   font-size: 1.1rem;
   font-weight: 600;
-  color: #3B82D6;
+  color: #EF4444;
 }
 
 .stat-name {
@@ -493,14 +493,8 @@ onMounted(() => {
   border: 1px solid #22C55E;
 }
 
-.status-badge.coming {
-  background: rgba(251, 191, 36, 0.2);
-  color: #FBBF24;
-  border: 1px solid #FBBF24;
-}
-
 .mode-arrow {
-  color: #3B82D6;
+  color: #EF4444;
   font-size: 1.5rem;
   flex-shrink: 0;
   opacity: 0;
@@ -528,11 +522,11 @@ onMounted(() => {
   padding: 1.5rem;
   background: linear-gradient(135deg, #1a1a1a 0%, #2d2d2d 100%);
   border-radius: 15px;
-  border: 1px solid rgba(59, 130, 214, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.1);
 }
 
 .stat-icon {
-  color: #3B82D6;
+  color: #EF4444;
   font-size: 1.5rem;
   flex-shrink: 0;
 }

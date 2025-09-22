@@ -38,7 +38,6 @@
                   <div class="game-overlay">
                     <div class="game-content">
                       <div class="game-header">
-                        <Icon name="mdi:soccer" class="game-icon" />
                         <h3 class="game-title">FC 26</h3>
                       </div>
                       
@@ -64,7 +63,6 @@
                   <div class="game-overlay">
                     <div class="game-content">
                       <div class="game-header">
-                        <Icon name="mdi:pistol" class="game-icon" />
                         <h3 class="game-title">Call of Duty BO7</h3>
                       </div>
                       
@@ -76,7 +74,7 @@
                       </div>
                       
                       <div class="game-status">
-                        <span class="status-badge coming-soon">Bientôt disponible</span>
+                        <span class="status-badge active">Disponible</span>
                       </div>
                     </div>
                   </div>
@@ -140,9 +138,7 @@ const navigateToGame = (gameId) => {
   if (gameId === 'fc26') {
     navigateTo('/ladder/fc26')
   } else if (gameId === 'cod-bo7') {
-    // Pour l'instant, afficher un message
-    const { addNotification } = useNotifications()
-    addNotification('Call of Duty BO7 sera bientôt disponible !', 'info')
+    navigateTo('/ladder/cod-bo7')
   }
 }
 

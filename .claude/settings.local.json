@@ -28,7 +28,10 @@
       "Bash(cmd /c:*)",
       "Bash(timeout:*)",
       "Bash(dir prisma)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(copy:*)",
+      "Bash(npx tsc:*)",
+      "Bash(find:*)"
     ],
     "deny": []
   }
